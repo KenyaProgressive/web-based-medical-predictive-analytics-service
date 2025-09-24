@@ -109,7 +109,7 @@ class BpmIndicators:
 
         return accelerations
 
-    def get_decelerations(self, basal_heart_rate: float, bpm: pd.DataFrame = None) -> List[str, Union[int, float]]:
+    def get_decelerations(self, basal_heart_rate: float, bpm: pd.DataFrame = None) -> List[Dict[str, Union[int, float]]]:
         """
         Получение данных об децелерациях.
 

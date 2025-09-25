@@ -21,6 +21,7 @@ DB_CONNECTION_LINK: str = f"postgres://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{LOCA
 
 DB_LOG_PATH: str = "app/logs/db_logs/db_log.log" ## Путь для сохранения логов ДБ-логгера
 COMMON_LOG_PATH: str = "app/logs/common/common_log.log" ## Путь для сохранения логов main-логгера
+BACKEND_LOG_PATH: str = "app/logs/backend_logs/backend_log.log"
 COMMON_LOG_LEVEL: str = "DEBUG" ## Минимальный лог-левел для всех логгеров
 COMMON_LOG_FORMAT: str = "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}" ## Формат вывода логов для всех логгеров
 RETENTION_COUNT: int = 10 ## Хранится последних 10 лог файлов

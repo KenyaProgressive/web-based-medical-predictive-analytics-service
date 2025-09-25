@@ -3,6 +3,7 @@ from loguru import logger
 from app.const import (
     DB_LOG_PATH,
     COMMON_LOG_PATH,
+    BACKEND_LOG_PATH,
     COMMON_LOG_LEVEL, 
     COMMON_LOG_FORMAT,
     ROTATION_LIMITER,
@@ -41,3 +42,18 @@ logger.add(
 )
 
 CommonLogger = logger.bind(component="common")
+
+
+## Backend-логгер
+
+logger.add(
+    sink=BACKEND_LOG_PATH,
+    level=COMMON_LOG_LEVEL,
+    format=COMMON_LOG_FORMAT,
+    rotation=ROTATION_LIMITER,
+    retention=RETENTION_COUNT,
+    compression=COMPRESSION_FORMAT,
+    filter=lambda log: log["extra"].get("component") == "backend"
+)
+
+BackendLogger = logger.bind(component="backend")

@@ -3,55 +3,46 @@ from typing import List, Dict, Union
 import pandas as pd
 
 
-class BpmIndicators:
+class Indicators:
     """
-    Класс, содержащий методы для интерпритации данных о bpm
+    Класс, содержащий методы для интерпритации данных ктг
     """
-    def __init__(self, bpm: pd.DataFrame):
-        self.__bpm = bpm.copy()
+    def __init__(self, df: pd.DataFrame):
+        self.__df: pd.DataFrame = df.copy()
+        self.__basal_bpm_df: pd.DataFrame = self.__get_basal_bpm_df(bpm_df=df[['time_sec', 'bpm_value']].copy())
+        self.__basal_bpm: float = self.__basal_bpm_df['bpm_value'].mean()
 
-    def get_basal_heart_rate(self, basal_bpm: pd.DataFrame = None) -> float:
-        """
-        Вычисление базальной частоты сердечных сокращений.
+    @property
+    def basal_bpm(self):
+        """Базальная частота сердечных сокращений"""
+        return self.__basal_bpm
 
-        Args:
-            basal_bpm (optional): Датафрейм, содержащий таймлайн с данными о ЧСС.
-                Должен иметь столбцы time_sec и value.
-                time_sec (float): Время с начала процедуры в секундах.
-                value (float): ЧСС в момент измерения.
-        
-        Returns:
-            Базальная частота сердечных сокращений.
-        """
+    def __get_basal_bpm_df(self, bpm_df: pd.DataFrame) -> pd.DataFrame:
+        basal_bpm = bpm_df['bpm_value'].mean()
 
-        if basal_bpm is None:
-            basal_bpm = self.__bpm.copy()
-
-        basal_heart_rate = basal_bpm['value'].mean()
-
-        accelerations = self.get_accelerations(basal_heart_rate, bpm=basal_bpm)
-        decelerations = self.get_decelerations(basal_heart_rate, bpm=basal_bpm)
+        accelerations = self.get_accelerations(basal_bpm, bpm_df=bpm_df)
+        decelerations = self.get_decelerations(basal_bpm, bpm_df=bpm_df)
 
         for a in accelerations:
-            basal_bpm.drop(index=range(a['start_index'], a['finish_index']), inplace=True)
+            bpm_df.drop(index=range(a['start_index'], a['finish_index']), inplace=True)
         for d in decelerations:
-            basal_bpm.drop(index=range(d['start_index'], d['finish_index']), inplace=True)
+            bpm_df.drop(index=range(d['start_index'], d['finish_index']), inplace=True)
 
         if len(accelerations) > 0 or len(decelerations) > 0:
-            basal_heart_rate = self.get_basal_heart_rate(basal_bpm=basal_bpm)
+            bpm_df = self.__get_basal_bpm_df(bpm_df=bpm_df)
 
-        return basal_heart_rate
+        return bpm_df
 
-    def get_accelerations(self, basal_heart_rate: float, bpm: pd.DataFrame = None) -> List[Dict[str, Union[int, float]]]:
+    def get_accelerations(self, basal_bpm: float = None, bpm_df: pd.DataFrame = None) -> List[Dict[str, Union[int, float]]]:
         """
         Получение данных об акцелерациях.
 
         Params:
-            basal_heart_rate: Базальная частота сердечных сокращений.
+            basal_heart_rate: Базальная частота сердечных сокращений (уд./мин.).
             bpm (optional): Датафрейм, содержащий таймлайн с данными о ЧСС, в котором будет выполняться поиск акцелераций.
                 Должен иметь столбцы time_sec и value.
-                time_sec (float): Время с начала процедуры в секундах.
-                value (float): ЧСС в момент измерения.
+                time_sec (float): Время с начала процедуры (сек.).
+                value (float): ЧСС в момент измерения (уд./мин.).
                 
                 По умолчанию, поиск выполняется в датафрейме, переданном в конструктор класса.
         
@@ -66,8 +57,10 @@ class BpmIndicators:
                 }
         """
 
-        if bpm is None:
-            bpm = self.__bpm.copy()
+        if basal_bpm is None:
+            basal_bpm = self.__basal_bpm
+        if bpm_df is None:
+            bpm_df = self.__df
 
         accelerations = []
 
@@ -76,10 +69,10 @@ class BpmIndicators:
         is_increase_start = is_increase_finish = False
 
         prev_time = 0
-        for row in bpm.itertuples():
+        for row in bpm_df.itertuples():
             current_time = row.time_sec
 
-            if row.value - basal_heart_rate >= 15:
+            if row.bpm_value - basal_bpm >= 15:
                 if not is_increase_start:
                     start_time = row.time_sec
                     start_index = row.Index
@@ -109,16 +102,16 @@ class BpmIndicators:
 
         return accelerations
 
-    def get_decelerations(self, basal_heart_rate: float, bpm: pd.DataFrame = None) -> List[Dict[str, Union[int, float]]]:
+    def get_decelerations(self, basal_bpm: float = None, bpm_df: pd.DataFrame = None) -> List[Dict[str, Union[int, float]]]:
         """
         Получение данных об децелерациях.
 
         Params:
-            basal_heart_rate: Базальная частота сердечных сокращений.
+            basal_heart_rate: Базальная частота сердечных сокращений (уд./мин.).
             bpm (optional): Датафрейм, содержащий таймлайн с данными о ЧСС, в котором будет выполняться поиск децелераций.
                 Должен иметь столбцы time_sec и value.
-                time_sec (float): Время с начала процедуры в секундах.
-                value (float): ЧСС в момент измерения.
+                time_sec (float): Время с начала процедуры (сек.).
+                value (float): ЧСС в момент измерения (уд./мин.).
 
                 По умолчанию, поиск выполняется в датафрейме, переданном в конструктор класса.
 
@@ -133,8 +126,10 @@ class BpmIndicators:
                 }
         """
 
-        if bpm is None:
-            bpm = self.__bpm.copy()
+        if basal_bpm is None:
+            basal_bpm = self.__basal_bpm
+        if bpm_df is None:
+            bpm_df = self.__df
 
         decelerations = []
 
@@ -143,10 +138,10 @@ class BpmIndicators:
         is_decrease_start = is_decrease_finish = False
 
         prev_time = 0
-        for row in bpm.itertuples():
+        for row in bpm_df.itertuples():
             current_time = row.time_sec
 
-            if basal_heart_rate - row.value >= 15:
+            if basal_bpm - row.bpm_value >= 15:
                 if not is_decrease_start:
                     start_time = row.time_sec
                     start_index = row.Index
@@ -179,7 +174,7 @@ class BpmIndicators:
     def get_short_term_variability(self, bpm: pd.DataFrame = None) -> float:
         """Получение кратковременной вариабельности"""
         if bpm is None:
-            bpm = self.__bpm
+            bpm = self.__df
 
         stv: float = 0
 
@@ -203,8 +198,8 @@ class BpmIndicators:
                     finish_index = current_index
 
                     var_data = bpm.loc[start_index:finish_index]
-                    max_bpm = var_data['value'].max()
-                    min_bpm = var_data['value'].min()
+                    max_bpm = var_data['bpm_value'].max()
+                    min_bpm = var_data['bpm_value'].min()
                     amplitude = max_bpm - min_bpm
 
                     stv = (stv * count + amplitude) / (count + 1)
@@ -217,7 +212,7 @@ class BpmIndicators:
     def get_long_term_variability(self, bpm: pd.DataFrame = None) -> float:
         """Получение долговременной вариабельности"""
         if bpm is None:
-            bpm = self.__bpm
+            bpm = self.__df
 
         ltv: float = 0
 
@@ -241,8 +236,8 @@ class BpmIndicators:
                     finish_index = current_index
 
                     var_data = bpm.loc[start_index:finish_index]
-                    max_bpm = var_data['value'].max()
-                    min_bpm = var_data['value'].min()
+                    max_bpm = var_data['bpm_value'].max()
+                    min_bpm = var_data['bpm_value'].min()
                     amplitude = max_bpm - min_bpm
 
                     ltv = (ltv * count + amplitude) / (count + 1)

@@ -1,6 +1,0 @@
-- Next.js, React + RTK
-- shadcn/ui
-
-Need to know:
-- base url for api (kinda like 'https://huy.com/api/' but local(?))\
-- exact full app state (what kind of data should i fetch)

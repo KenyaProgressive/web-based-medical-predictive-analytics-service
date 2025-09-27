@@ -1,5 +1,5 @@
+from typing import List
 import pandas as pd
-from typing import List, Dict, Union
 
 def join_data(files: List[str]) -> pd.DataFrame:
     """Функция для объединения файлов датасета в один файл с единым таймлайном"""

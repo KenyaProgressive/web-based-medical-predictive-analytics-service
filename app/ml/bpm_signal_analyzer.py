@@ -1,119 +1,137 @@
+from typing import List, TypedDict, Dict
 import pandas as pd
-from typing import List, TypedDict, Dict, Union
 
-class Deceleration(TypedDict):
-    peak_time: float
+class HeartRateChange(TypedDict):
     start_time: float
+    peak_time: float
     end_time: float
     duration_sec: float
     amplitude: float
-    peak_idx: int
     start_idx: int
+    peak_idx: int
     end_idx: int
 
 class DecelerationsType(TypedDict):
-    light: List[Deceleration]
-    moderate: List[Deceleration]
-    severe: List[Deceleration]
-    prolongued: List[Deceleration]
-    early: List[Deceleration]
-    late: List[Deceleration]
-    variable: List[Deceleration]
+    light: List[HeartRateChange]
+    moderate: List[HeartRateChange]
+    severe: List[HeartRateChange]
+    prolongued: List[HeartRateChange]
+    early: List[HeartRateChange]
+    late: List[HeartRateChange]
+    variable: List[HeartRateChange]
 
-class Indicators:
+class BpmSignalAnalyzer:
     """
     Класс, содержащий методы для интерпритации данных ктг
     """
     def __init__(self, df: pd.DataFrame):
         self.__df: pd.DataFrame = df.copy()
-        self.__basal_bpm_df: pd.DataFrame = self.__get_basal_bpm_df(bpm_df=self.__df.copy())
-
-        self.__basal_bpm: float = self.__basal_bpm_df['bpm'].mean()
+        self.__baseline: float = self.__get_baseline()
 
     @property
-    def basal_bpm(self):
+    def baseline(self):
         """Базальная частота сердечных сокращений"""
-        return self.__basal_bpm
+        return self.__baseline
 
-    def __get_basal_bpm_df(self, bpm_df: pd.DataFrame) -> pd.DataFrame:
-        basal_bpm = bpm_df['bpm'].mean()
+    def __get_baseline(self, baseline_df: pd.DataFrame = None) -> float:
+        if baseline_df is None:
+            baseline_df = self.__df.copy()
 
-        accelerations = self.get_accelerations(basal_bpm, bpm_df=bpm_df)
-        decelerations = self.get_decelerations(basal_bpm, df=bpm_df)
+        baseline: float = baseline_df['bpm'].mean()
+
+        accelerations: List[HeartRateChange] = self.get_accelerations(baseline=baseline, df=baseline_df)
+        decelerations: List[HeartRateChange] = self.get_decelerations(baseline=baseline, df=baseline_df)
 
         for a in accelerations:
-            bpm_df.drop(index=range(a['start_index'], a['finish_index']), inplace=True)
+            baseline_df.drop(index=range(a['start_idx'], a['end_idx']), inplace=True)
         for d in decelerations:
-            bpm_df.drop(index=range(d['start_idx'], d['end_idx']), inplace=True)
+            baseline_df.drop(index=range(d['start_idx'], d['end_idx']), inplace=True)
 
         if len(accelerations) > 0 or len(decelerations) > 0:
-            bpm_df = self.__get_basal_bpm_df(bpm_df=bpm_df)
+            baseline = self.__get_baseline(baseline_df=baseline_df)
 
-        return bpm_df
+        return baseline
 
-    def get_accelerations(self, basal_bpm: float = None, bpm_df: pd.DataFrame = None) -> List[Dict[str, Union[int, float]]]:
+    def get_accelerations(
+        self,
+        baseline: float = None,
+        df: pd.DataFrame = None
+    ) -> List[HeartRateChange]:
         """
         Получение данных об акцелерациях.
 
         Params:
-            basal_heart_rate: Базальная частота сердечных сокращений (уд./мин.).
-            bpm (optional): Датафрейм, содержащий таймлайн с данными о ЧСС, в котором будет выполняться поиск акцелераций.
+            baseline (optional): Базальная частота сердечных сокращений (уд./мин.).
+            df (optional): Датафрейм, содержащий таймлайн с данными о ЧСС, в котором будет выполняться поиск акцелераций.
                 Должен иметь столбцы time_sec и value.
-                time_sec (float): Время с начала процедуры (сек.).
-                value (float): ЧСС в момент измерения (уд./мин.).
+                time (float): Время с начала процедуры (сек.).
+                bpm (float): ЧСС в момент измерения (уд./мин.).
                 
                 По умолчанию, поиск выполняется в датафрейме, переданном в конструктор класса.
         
         Returns:
-            accelerations: Список словарей с данными о каждой акцелерации.
+            List[HeartRateChange]: Список словарей с данными о каждой акцелерации.
                 Каждый словарь имеет поля:
                 {
-                    start_index (int): Индекс начала акцелерации в датафрейме bpm.
-                    finish_index (int): Индекс окончания акцелерации в датафрейме bpm.
-                    start_time (float): Время начала децеларации в секундах с начала процедуры.
-                    finish_time (float): Время окончания децеларации в секундах с начала процедуры.
+                    start_time: (float): Время начала акцеларации (сек. с начала процедуры).
+                    peak_time: (float): Время пика акцеларации (сек. с начала процедуры).
+                    end_time: (float): Время окончания акцеларации (сек. с начала процедуры).
+                    duration_sec: (float): Продолжительность акцелерации (сек.).
+                    amplitude: (float): Амплитуда акцелерации (уд./мин.).
+                    start_idx: (int): Индекс начала акцелерации.
+                    peak_idx: (int): Индекс пика акцелерации.
+                    end_idx: (int): Индекс окончания акцелерации.
                 }
         """
 
-        if basal_bpm is None:
-            basal_bpm = self.__basal_bpm
-        if bpm_df is None:
-            bpm_df = self.__df
+        if baseline is None:
+            baseline = self.__baseline
+        if df is None:
+            df = self.__df
 
-        accelerations = []
-
-        start_time = finish_time = 0
-        start_index = finish_index = 0
+        start_time = end_time = 0
+        start_idx = end_idx = 0
         is_increase_start = is_increase_finish = False
 
+        accelerations: List[HeartRateChange] = []
+
         prev_time = 0
-        for row in bpm_df.itertuples():
+        for row in df.itertuples():
             current_time = row.time
 
-            if row.bpm - basal_bpm >= 15:
+            if row.bpm - baseline >= 15:
                 if not is_increase_start:
                     start_time = row.time
-                    start_index = row.Index
+                    start_idx = row.Index
                     is_increase_start = True
                 elif current_time - prev_time > 5:
-                    start_time = finish_time = 0
+                    start_time = end_time = 0
                     is_increase_start = is_increase_finish = False
                 else:
-                    finish_time = row.time
-                    finish_index = row.Index
+                    end_time = row.time
+                    end_idx = row.Index
             elif is_increase_start:
                 is_increase_finish = True
 
             if is_increase_start and is_increase_finish:
-                if finish_time - start_time >= 15:
+                if end_time - start_time >= 15:
+                    curr_act_df: pd.DataFrame = df.loc[start_idx:end_idx + 1]
+
+                    peak_idx = curr_act_df['bpm'].idxmax()
+                    peak_time, peak_value = df.loc[peak_idx]['time'], df.loc[peak_idx]['bpm']
+
                     accelerations.append({
-                        'start_index': start_index,
-                        'finish_index': finish_index,
-                        'start_time': start_time,
-                        'finish_time': finish_time
+                        "peak_time": float(peak_time),
+                        "start_time": start_time,
+                        "end_time": end_time,
+                        "duration_sec": end_time - start_time,
+                        "amplitude": float(peak_value - baseline),
+                        "peak_idx": peak_idx,
+                        "start_idx": start_idx,
+                        "end_idx": end_idx,
                     })
 
-                start_time = finish_time = 0
+                start_time = end_time = 0
                 is_increase_start = is_increase_finish = False
 
             prev_time = current_time
@@ -122,34 +140,38 @@ class Indicators:
 
     def get_decelerations(
         self,
-        basal_bpm: float = None,
+        baseline: float = None,
         df: pd.DataFrame = None
-    ) -> List[Deceleration]:
+    ) -> List[HeartRateChange]:
         """
         Получение данных об децелерациях.
 
         Params:
-            basal_heart_rate: Базальная частота сердечных сокращений (уд./мин.).
-            bpm (optional): Датафрейм, содержащий таймлайн с данными о ЧСС, в котором будет выполняться поиск децелераций.
+            baseline (optional): Базальная частота сердечных сокращений (уд./мин.).
+            df (optional): Датафрейм, содержащий таймлайн с данными о ЧСС, в котором будет выполняться поиск децелераций.
                 Должен иметь столбцы time_sec и value.
-                time_sec (float): Время с начала процедуры (сек.).
-                value (float): ЧСС в момент измерения (уд./мин.).
-
+                time (float): Время с начала процедуры (сек.).
+                bpm (float): ЧСС в момент измерения (уд./мин.).
+                
                 По умолчанию, поиск выполняется в датафрейме, переданном в конструктор класса.
-
+        
         Returns:
-            decelerations: Список словарей с данными о каждой децелерации.
+            List[HeartRateChange]: Список словарей с данными о каждой децелерации.
                 Каждый словарь имеет поля:
                 {
-                    start_index (int): Индекс начала децелерации в датафрейме bpm.
-                    finish_index (int): Индекс окончания децелерации в датафрейме bpm.
-                    start_time (float): Время начала децеларации в секундах с начала процедуры.
-                    finish_time (float): Время окончания децеларации в секундах с начала процедуры.
+                    start_time: (float): Время начала децеларации (сек. с начала процедуры).
+                    peak_time: (float): Время пика децеларации (сек. с начала процедуры).
+                    end_time: (float): Время окончания децеларации (сек. с начала процедуры).
+                    duration_sec: (float): Продолжительность децелерации (сек.).
+                    amplitude: (float): Амплитуда децелерации (уд./мин.).
+                    start_idx: (int): Индекс начала децелерации.
+                    peak_idx: (int): Индекс пика децелерации.
+                    end_idx: (int): Индекс окончания децелерации.
                 }
         """
 
-        if basal_bpm is None:
-            basal_bpm = self.__basal_bpm
+        if baseline is None:
+            baseline = self.__baseline
         if df is None:
             df = self.__df
 
@@ -157,13 +179,13 @@ class Indicators:
         start_idx = end_idx = 0
         is_decrease_start = is_decrease_finish = False
 
-        decelerations: List[Deceleration] = []
+        decelerations: List[HeartRateChange] = []
 
         prev_time = 0
         for row in df.itertuples():
             current_time = row.time
 
-            if basal_bpm - row.bpm >= 15:
+            if baseline - row.bpm >= 15:
                 if not is_decrease_start:
                     start_time = row.time
                     start_idx = row.Index
@@ -185,11 +207,11 @@ class Indicators:
                     peak_time, peak_value = df.loc[peak_idx]['time'], df.loc[peak_idx]['bpm']
 
                     decelerations.append({
-                        "peak_time": peak_time,
+                        "peak_time": float(peak_time),
                         "start_time": start_time,
                         "end_time": end_time,
                         "duration_sec": end_time - start_time,
-                        "amplitude": basal_bpm - peak_value,
+                        "amplitude": float(baseline - peak_value),
                         "peak_idx": peak_idx,
                         "start_idx": start_idx,
                         "end_idx": end_idx,
@@ -205,8 +227,11 @@ class Indicators:
     def get_decelerations_type(
         self,
         contractions: pd.DataFrame,
-        decelerations: List[Deceleration]
+        decelerations: List[HeartRateChange] = None
     ) -> List[DecelerationsType]:
+        if decelerations is None:
+            decelerations = self.get_decelerations()
+
         decelerations_type: Dict[DecelerationsType] = {
             'light': [],
             'moderate': [],

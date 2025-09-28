@@ -271,8 +271,7 @@ class BpmSignalAnalyzer:
                 else:
                     decelerations_type['variable'].append(curr_decel)
 
-        import pprint
-        pprint.pprint(decelerations_type)
+        return decelerations_type
 
     def get_short_term_variability(self, bpm: pd.DataFrame = None) -> float:
         """Получение кратковременной вариабельности"""

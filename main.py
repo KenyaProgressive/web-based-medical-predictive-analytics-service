@@ -7,8 +7,13 @@ from app.const import (
     NO_ARGS,
     LOCALHOST_ADDRESS,
     PORT,
-    APP_PATH
+    APP_PATH,
+    POSTGRES_USER,
+    POSTGRES_PASSWORD,
+    POSTGRES_DB,
+    DB_PORT
 )
+from app.emulator.emulator import AsyncDualFolderEmulator
 from app.config import CommonLogger
 
 
@@ -20,11 +25,31 @@ async def main():
 
     try:
         await db_master.execute_query(CREATE_TABLE_PARAMETRES, NO_ARGS)
-        print("SUCCESS")
+        # print("SUCCESS")
     except Exception as e:
         CommonLogger.error(e)
 
-    uvicorn.run(APP_PATH, host=LOCALHOST_ADDRESS, port=PORT, reload=True)
+    
+    emulator = AsyncDualFolderEmulator(
+        folder1="/home/mr_kenya/Desktop/projects/web-based-medical-predictive-analytics-service/app/emulator/20250908-07500001_1.csv",
+        folder2="/home/mr_kenya/Desktop/projects/web-based-medical-predictive-analytics-service/app/emulator/20250908-07500001_2.csv",
+        delay=0.25,
+        db_config={
+            "user": POSTGRES_USER,
+            "password": POSTGRES_PASSWORD,
+            "database": POSTGRES_DB,
+            "host": LOCALHOST_ADDRESS,
+            "port": DB_PORT
+        }
+    )
+
+    await emulator.stream_data_async()
+
+   
+
+    # uvicorn.run(APP_PATH, host=LOCALHOST_ADDRESS, port=PORT, reload=True)
+
+    
 
 if __name__ == "__main__":
     asyncio.run(main())

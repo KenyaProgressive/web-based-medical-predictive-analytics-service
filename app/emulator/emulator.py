@@ -3,6 +3,7 @@ import time
 import csv
 import os
 import asyncpg
+from datetime import time
 
 class AsyncDualFolderEmulator:
     def __init__(self, folder1, folder2, chunk_size=1, delay=1.0, db_config=None):
@@ -22,24 +23,23 @@ class AsyncDualFolderEmulator:
         if self.pool:
             await self.pool.close()
 
-    def _load_csv_from_folder(self, folder):
+    def _load_csv_from_file(self, filename):
         data = []
-        if not os.path.exists(folder):
+        if not os.path.exists(filename):
+            print(f"Файл {filename} не найден")
             return data
-        files = sorted(f for f in os.listdir(folder) if f.endswith('.csv'))
-        for file in files:
-            path = os.path.join(folder, file)
-            try:
-                with open(path, newline='', encoding='utf-8') as f:
-                    reader = csv.DictReader(f)
-                    data.extend(list(reader))
-            except Exception as e:
-                print(f"Ошибка чтения файла {file}: {e}")
+        try:
+            with open(filename, newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                data = list(reader)
+        except Exception as e:
+            print(f"Ошибка чтения файла {filename}: {e}")
         return data
 
+
     def _load_data(self):
-        self.data1 = self._load_csv_from_folder(self.folder1)
-        self.data2 = self._load_csv_from_folder(self.folder2)
+        self.data1 = self._load_csv_from_file(self.folder1)
+        self.data2 = self._load_csv_from_file(self.folder2)
 
     async def _insert_rows(self, table_name, rows):
         if not rows or not self.pool:
@@ -78,11 +78,11 @@ class AsyncDualFolderEmulator:
                 rows2 = self.data2[idx2:idx2 + self.chunk_size]
                 idx2 += self.chunk_size
 
-            await self._insert_rows('hypoxia_table', rows1)
-            await self._insert_rows('regular_table', rows2)
+            await self._insert_rows('parametres', rows1)
+            # await self._insert_rows('regular_table', rows2)
 
             print(f"Отправлено в hypoxia_table: {len(rows1)} строк")
-            print(f"Отправлено в regular_table: {len(rows2)} строк")
+            # print(f"Отправлено в regular_table: {len(rows2)} строк")
             print('---')
 
             await asyncio.sleep(self.delay)

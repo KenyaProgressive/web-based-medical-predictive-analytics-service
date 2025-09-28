@@ -1,6 +1,7 @@
 from typing import Tuple
 import pandas as pd
 
+from app.const import MIN_TIME, MAX_TIME
 from app.ml.uterus_signal_analyzer import find_contractions
 from app.ml.bpm_signal_analyzer import BpmSignalAnalyzer
 
@@ -8,8 +9,6 @@ def get_ctg_data() -> Tuple:
     bpm_df = pd.read_csv('bpm.csv')
     uterus_df = pd.read_csv('uterus.csv')
 
-    MIN_TIME = 60 * 28
-    MAX_TIME = 60 * 32
     time = bpm_df['time'].max() - bpm_df['time'].min()
 
     contractions = find_contractions(uterus_df)

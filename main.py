@@ -11,7 +11,9 @@ from app.const import (
     POSTGRES_USER,
     POSTGRES_PASSWORD,
     POSTGRES_DB,
-    DB_PORT
+    DB_PORT,
+    CSV_PATH_1,
+    CSV_PATH_2,
 )
 from app.emulator.emulator import AsyncDualFolderEmulator
 from app.config import CommonLogger
@@ -31,8 +33,8 @@ async def main():
 
     
     emulator = AsyncDualFolderEmulator(
-        folder1="/home/mr_kenya/Desktop/projects/web-based-medical-predictive-analytics-service/app/emulator/20250908-07500001_1.csv",
-        folder2="/home/mr_kenya/Desktop/projects/web-based-medical-predictive-analytics-service/app/emulator/20250908-07500001_2.csv",
+        folder1=CSV_PATH_1,
+        folder2=CSV_PATH_2,
         delay=0.25,
         db_config={
             "user": POSTGRES_USER,

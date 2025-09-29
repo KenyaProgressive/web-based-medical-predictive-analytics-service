@@ -19,33 +19,45 @@ import {
 export default function Home() {
 
 
-  const [status, setStatus] = useState(1);
+
+  const [state, setState] = useState({
+    'card_params': [
+      {
+        'value': 1,
+        'status': 1,
+        'title': "ЧСС",
+        'rows': 1,
+        'cols': 1,
+        'id': 1
+      },
+      {
+        'value': 1,
+        'status': 1,
+        'title': "Сокращения матки",
+        'rows': 1,
+        'cols': 1,
+        'id': 2
+      }
+
+    ]
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const intervalRef = useRef(null);
 
   const fetchState = async () => {
     try {
-      // headers.append('Content-Type', 'application/json');
-      // headers.append('Accept', 'application/json');
 
-      // headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
-      // headers.append('Access-Control-Allow-Credentials', 'true');
-
-      // headers.append('GET', 'POST', 'OPTIONS');
-
-      // headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
-      // headers.append('Access-Control-Allow-Credentials', 'true');
-
-      const response = await fetch('http://localhost:8080/test');
+      const response = await fetch('http://localhost:8080/getState');
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const jsonData = await response.json();
-      setStatus(jsonData.status);
-      console.log('Получено с бека:', jsonData);
+      // setStatus(jsonData.state);
+      setState(jsonData.state);
+      // console.log('Получено с бека:', jsonData);
 
       setError(null);
 
@@ -73,13 +85,11 @@ export default function Home() {
     };
   }, [])
 
-
-
   return (
     <div className="bg-slate-400 grid md:grid-cols-4 xl:grid-cols-5 md:grid-rows-auto xl:grid-rows-1 h-screen p-4 gap-4">
 
       <div className="col-span-4">
-        <Dashboard />
+        <Dashboard card_params={state.card_params} />
       </div>
 
       <div className="md:col-span-4 xl:col-span-1">

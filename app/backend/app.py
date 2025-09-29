@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+global count
 app = FastAPI()
 
-# Настройка CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -19,3 +19,40 @@ app.add_middleware(
 @app.get("/test")
 async def connection_test():
     return {"status": "SUCCESS"}
+
+
+# Вот тут тебе нужно короче досоставить стейт по образцу и раскидать в него значения из ML-слоя
+# Самое сложное будет следить за полем current_notifications
+
+count = 1 # временная переменная для временного дебага
+
+@app.get("/getState")
+async def connection_test():
+
+    global count
+
+    count = (count % 3) + 1
+
+    state = {
+        'card_params': [
+                {
+                'value': 1,
+                'status': count+1,
+                'title': "ЧСС",
+                'rows': 1,
+                'cols': 1,
+                'id': 1
+                },
+            {
+                'value': 1,
+                'status': count,
+                'title': "Сокращения матки",
+                'rows': 1,
+                'cols': 1,
+                'id': 2
+            }
+
+        ]
+    }
+    
+    return {'state': state}

@@ -85,6 +85,27 @@ export default function Dashboard({ card_params, notify_params }) {
         'events': []
     };
 
+    let decelerations_per_30_min = [
+        {
+            'apmlitude': 30,
+            'duration': 15,
+            // всякая прочая хуйня
+            'type': "late"
+        },
+        {
+            'apmlitude': 30,
+            'duration': 15,
+            // всякая прочая хуйня
+            'type': "early"
+        },
+        {
+            'apmlitude': 30,
+            'duration': 15,
+            // всякая прочая хуйня
+            'type': "huy"
+        }
+    ];
+
 
     let ok_color = "bg-slate-100"
     let warn_color = "bg-yellow-300"

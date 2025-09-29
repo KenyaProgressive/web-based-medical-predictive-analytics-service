@@ -1,7 +1,9 @@
+"use client"
 import Image from "next/image";
 import Dashboard from "@/components/ui/Dashboard";
 // import Card from "./dashboard/Card";
 
+import { useEffect, useState, useRef } from "react";
 
 import {
   Card,
@@ -13,8 +15,65 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+
 export default function Home() {
-  let hypoxy = 0;
+
+
+  const [status, setStatus] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const intervalRef = useRef(null);
+
+  const fetchState = async () => {
+    try {
+      // headers.append('Content-Type', 'application/json');
+      // headers.append('Accept', 'application/json');
+
+      // headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
+      // headers.append('Access-Control-Allow-Credentials', 'true');
+
+      // headers.append('GET', 'POST', 'OPTIONS');
+
+      // headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
+      // headers.append('Access-Control-Allow-Credentials', 'true');
+
+      const response = await fetch('http://localhost:8080/test');
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const jsonData = await response.json();
+      setStatus(jsonData.status);
+      console.log('Получено с бека:', jsonData);
+
+      setError(null);
+
+    } catch (err) {
+
+      setError(err.message);
+      console.log('Ошибка при запросе стейта:', err);
+
+    }
+  }
+
+  useEffect(() => {
+    const start_polling = () => {
+      fetchState();
+
+      intervalRef.current = setInterval(fetchState, 1000);
+    }
+
+    start_polling();
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    };
+  }, [])
+
+
 
   return (
     <div className="bg-slate-400 grid md:grid-cols-4 xl:grid-cols-5 md:grid-rows-auto xl:grid-rows-1 h-screen p-4 gap-4">

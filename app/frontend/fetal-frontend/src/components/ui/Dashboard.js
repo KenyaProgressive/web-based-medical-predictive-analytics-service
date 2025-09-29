@@ -15,6 +15,7 @@ import {
 export default function Dashboard({ card_params, notify_params }) {
 
     // card priority = columns by a card
+    // console.log("title = " + card_params);
 
     let dec_early = {
         'value': 1,
@@ -107,13 +108,20 @@ export default function Dashboard({ card_params, notify_params }) {
     ];
 
 
-    let ok_color = "bg-slate-100"
-    let warn_color = "bg-yellow-300"
-    let alert_color = "bg-red-400"
+    // let ok_color = "bg-slate-100"
+    // let warn_color = "bg-yellow-300"
+    // let alert_color = "bg-red-400"
+
+    // state.card_params.map(huy => {
+    //     console.log("state in front: ", state.card_params);
+    // }
+    // )
+
+
     return (
         <div className="w-full h-full grid grid-cols-6 grid-rows-4 gap-4">
-            {state.card_params.map(param =>
-                < DashboardCard color={param.status === 2 ? alert_color : param.status === 1 ? warn_color : ok_color} key={param.title} param={param.status} param_title={param.title} rows={param.rows} cols={param.cols} />
+            {card_params && card_params.map(param =>
+                <DashboardCard key={param.id} param={param} />
             )}
         </div >
     )

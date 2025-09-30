@@ -1,6 +1,6 @@
 import asyncio
 import uvicorn
-from db.query import CREATE_TABLE_PARAMETRES
+from db.query import CREATE_TABLE_BPM, CREATE_TABLE_UTERUS
 from db.db_config import DbMaster
 from app.const import (
     DB_CONNECTION_LINK, 
@@ -24,7 +24,8 @@ async def main():
     )
 
     try:
-        await db_master.execute_query(CREATE_TABLE_PARAMETRES, NO_ARGS)
+        await db_master.execute_query(CREATE_TABLE_BPM, NO_ARGS)
+        await db_master.execute_query(CREATE_TABLE_UTERUS, NO_ARGS)
         # print("SUCCESS")
     except Exception as e:
         CommonLogger.error(e)

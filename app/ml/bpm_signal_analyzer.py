@@ -1,4 +1,4 @@
-from typing import List, TypedDict, Dict
+from typing import List, TypedDict, Optional
 import pandas as pd
 
 class HeartRateChange(TypedDict):
@@ -10,15 +10,7 @@ class HeartRateChange(TypedDict):
     start_idx: int
     peak_idx: int
     end_idx: int
-
-class DecelerationsType(TypedDict):
-    light: List[HeartRateChange]
-    moderate: List[HeartRateChange]
-    severe: List[HeartRateChange]
-    prolongued: List[HeartRateChange]
-    early: List[HeartRateChange]
-    late: List[HeartRateChange]
-    variable: List[HeartRateChange]
+    type: Optional[List[str]]
 
 class BpmSignalAnalyzer:
     """
@@ -26,14 +18,18 @@ class BpmSignalAnalyzer:
     """
     def __init__(self, df: pd.DataFrame):
         self.__df: pd.DataFrame = df.copy()
-        self.__baseline: float = self.__get_baseline()
 
-    @property
-    def baseline(self):
-        """Базальная частота сердечных сокращений"""
-        return self.__baseline
+    def get_baseline(self, baseline_df: pd.DataFrame = None) -> float:
+        """
+        Вычисление базальной ЧСС.
 
-    def __get_baseline(self, baseline_df: pd.DataFrame = None) -> float:
+        Params:
+            baseline_df (optional): DataFrame, на основании которого будет вычисляться базальная ЧСС.
+                По умолчанию, используется DataFrame, переданный в конструктор класса.
+
+        Returns:
+            float: Базальная ЧСС.
+        """
         if baseline_df is None:
             baseline_df = self.__df.copy()
 
@@ -48,22 +44,22 @@ class BpmSignalAnalyzer:
             baseline_df.drop(index=range(d['start_idx'], d['end_idx']), inplace=True)
 
         if len(accelerations) > 0 or len(decelerations) > 0:
-            baseline = self.__get_baseline(baseline_df=baseline_df)
+            baseline = self.get_baseline(baseline_df=baseline_df)
 
         return baseline
 
     def get_accelerations(
         self,
-        baseline: float = None,
+        baseline: float,
         df: pd.DataFrame = None
     ) -> List[HeartRateChange]:
         """
         Получение данных об акцелерациях.
 
         Params:
-            baseline (optional): Базальная частота сердечных сокращений (уд./мин.).
+            baseline: Базальная частота сердечных сокращений (уд./мин.).
             df (optional): Датафрейм, содержащий таймлайн с данными о ЧСС, в котором будет выполняться поиск акцелераций.
-                Должен иметь столбцы time_sec и value.
+                Должен иметь столбцы time_sec и bpm.
                 time (float): Время с начала процедуры (сек.).
                 bpm (float): ЧСС в момент измерения (уд./мин.).
                 
@@ -84,8 +80,6 @@ class BpmSignalAnalyzer:
                 }
         """
 
-        if baseline is None:
-            baseline = self.__baseline
         if df is None:
             df = self.__df
 
@@ -140,16 +134,16 @@ class BpmSignalAnalyzer:
 
     def get_decelerations(
         self,
-        baseline: float = None,
+        baseline: float,
         df: pd.DataFrame = None
     ) -> List[HeartRateChange]:
         """
         Получение данных об децелерациях.
 
         Params:
-            baseline (optional): Базальная частота сердечных сокращений (уд./мин.).
+            baseline: Базальная частота сердечных сокращений (уд./мин.).
             df (optional): Датафрейм, содержащий таймлайн с данными о ЧСС, в котором будет выполняться поиск децелераций.
-                Должен иметь столбцы time_sec и value.
+                Должен иметь столбцы time_sec и bpm.
                 time (float): Время с начала процедуры (сек.).
                 bpm (float): ЧСС в момент измерения (уд./мин.).
                 
@@ -170,8 +164,6 @@ class BpmSignalAnalyzer:
                 }
         """
 
-        if baseline is None:
-            baseline = self.__baseline
         if df is None:
             df = self.__df
 
@@ -215,63 +207,54 @@ class BpmSignalAnalyzer:
                         "peak_idx": peak_idx,
                         "start_idx": start_idx,
                         "end_idx": end_idx,
+                        "type": [],
                     })
 
                 start_time = end_time = 0
                 is_decrease_start = is_decrease_finish = False
 
             prev_time = current_time
-
         return decelerations
 
     def get_decelerations_type(
         self,
         contractions: pd.DataFrame,
-        decelerations: List[HeartRateChange] = None
-    ) -> List[DecelerationsType]:
-        if decelerations is None:
-            decelerations = self.get_decelerations()
-
-        decelerations_type: Dict[DecelerationsType] = {
-            'light': [],
-            'moderate': [],
-            'severe': [],
-            'prolongued': [],
-            'early': [],
-            'late': [],
-            'variable': [],
-        }
-
+        decelerations: List[HeartRateChange]
+    ) -> List[HeartRateChange]:
         for curr_decel in decelerations:
             if 180 <= curr_decel['duration_sec'] <= 600:
-                decelerations_type['prolongued'].append(curr_decel)
-            elif 15 <= curr_decel['amplitude'] <= 30:
-                decelerations_type['light'].append(curr_decel)
+                curr_decel['type'].append('prolongued')
+
+            if 15 <= curr_decel['amplitude'] <= 30:
+                curr_decel['type'].append('light')
             elif 16 <= curr_decel['amplitude'] <= 45:
-                decelerations_type['moderate'].append(curr_decel)
+                curr_decel['type'].append('moderate')
             elif curr_decel['amplitude'] >= 45:
-                decelerations_type['severe'].append(curr_decel)
+                curr_decel['type'].append('severe')
 
             overlap = contractions[
                 (contractions['end_time'] >= curr_decel['start_time'])
                 & (contractions['start_time'] <= curr_decel['end_time'])
             ]
-            for _, contraction in overlap.iterrows():
-                if (
-                    30 <= (curr_decel['start_time'] - contraction['start_time']) <= 60
-                    and curr_decel['peak_time'] > contraction['peak_time']
-                ):
-                    decelerations_type['late'].append(curr_decel)
-                elif (
-                    abs(curr_decel['start_time'] - contraction['start_time']) <= 3
-                    and abs(curr_decel['peak_time'] - contraction['peak_time']) <= 3
-                    and abs(curr_decel['end_time'] - contraction['end_time']) <= 3
-                ):
-                    decelerations_type['early'].append(curr_decel)
-                else:
-                    decelerations_type['variable'].append(curr_decel)
+            if not overlap.empty:
+                for _, contraction in overlap.iterrows():
+                    if (
+                        30 <= (curr_decel['start_time'] - contraction['start_time']) <= 60
+                        and curr_decel['peak_time'] > contraction['peak_time']
+                    ):
+                        curr_decel['type'].append('late')
+                    elif (
+                        abs(curr_decel['start_time'] - contraction['start_time']) <= 3
+                        and abs(curr_decel['peak_time'] - contraction['peak_time']) <= 3
+                        and abs(curr_decel['end_time'] - contraction['end_time']) <= 3
+                    ):
+                        curr_decel['type'].append('early')
+                    else:
+                        curr_decel['type'].append('variable')
+            else:
+                curr_decel['type'].append('variable')
 
-        return decelerations_type
+        return decelerations
 
     def get_short_term_variability(self, bpm: pd.DataFrame = None) -> float:
         """Получение кратковременной вариабельности"""

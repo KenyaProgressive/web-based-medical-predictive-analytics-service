@@ -1,30 +1,52 @@
 import asyncio
-import time
 import csv
 import os
-import asyncpg
-from datetime import time
 
-class AsyncDualFolderEmulator:
-    def __init__(self, folder1, folder2, chunk_size=1, delay=1.0, db_config=None):
-        self.folder1 = folder1
-        self.folder2 = folder2
+from typing import List, Optional, Dict, Any
+from db.db_config import DbMaster  # Импорт нашего класса DbMaster
+
+
+class AsyncFileEmulator:
+    """
+    Асинхронный эмулятор потоковой передачи данных из двух CSV-файлов
+    с записью данных в PostgreSQL через класс DbMaster.
+
+    Эмулятор последовательно читает записи из двух CSV-файлов,
+    по одной записи за раз с задержкой delay,
+    и асинхронно вставляет их в соответствующие таблицы базы данных.
+    """
+
+    def __init__(self,
+                 file1: str,
+                 file2: str,
+                 db_master: DbMaster,
+                 chunk_size: int = 1,
+                 delay: float = 1.0) -> None:
+        """
+        Инициализация эмулятора.
+
+        :param file1: Путь к первому CSV-файлу (данные hypoxia).
+        :param file2: Путь ко второму CSV-файлу (данные regular).
+        :param db_master: Инстанс класса DbMaster для работы с базой.
+        :param chunk_size: Количество записей для отправки за один шаг.
+        :param delay: Задержка в секундах между отправками данных.
+        """
+        self.file1 = file1
+        self.file2 = file2
+        self.db_master = db_master
         self.chunk_size = chunk_size
         self.delay = delay
-        self.data1 = []
-        self.data2 = []
-        self.db_config = db_config or {}
-        self.pool = None
+        self.data1: List[Dict[str, Any]] = []
+        self.data2: List[Dict[str, Any]] = []
 
-    async def _init_db_pool(self):
-        self.pool = await asyncpg.create_pool(**self.db_config)
+    def _load_csv_from_file(self, filename: str) -> List[Dict[str, Any]]:
+        """
+        Загрузить данные из CSV-файла в список словарей.
 
-    async def close(self):
-        if self.pool:
-            await self.pool.close()
-
-    def _load_csv_from_file(self, filename):
-        data = []
+        :param filename: Путь к CSV-файлу.
+        :return: Список записей, где каждая запись - словарь колонок.
+        """
+        data: List[Dict[str, Any]] = []
         if not os.path.exists(filename):
             print(f"Файл {filename} не найден")
             return data
@@ -36,39 +58,45 @@ class AsyncDualFolderEmulator:
             print(f"Ошибка чтения файла {filename}: {e}")
         return data
 
+    def _load_data(self) -> None:
+        """Загрузить данные из обоих CSV-файлов в память."""
+        self.data1 = self._load_csv_from_file(self.file1)
+        self.data2 = self._load_csv_from_file(self.file2)
 
-    def _load_data(self):
-        self.data1 = self._load_csv_from_file(self.folder1)
-        self.data2 = self._load_csv_from_file(self.folder2)
+    async def _insert_rows(self, table_name: str, rows: List[Dict[str, Any]]) -> None:
+        """
+        Асинхронно вставить записи в таблицу базы данных.
 
-    async def _insert_rows(self, table_name, rows):
-        if not rows or not self.pool:
+        :param table_name: Имя таблицы для вставки.
+        :param rows: Список словарей с данными для вставки.
+        """
+        if not rows:
             return
         sql = f"""
             INSERT INTO {table_name} (time, bpm, uterus)
             VALUES ($1, $2, $3)
         """
-        async with self.pool.acquire() as connection:
-            async with connection.transaction():
-                for row in rows:
-                    try:
-                        t = float(row.get('time', 0))
-                        b = float(row.get('bpm', 0))
-                        u = float(row.get('uterus', 0))
-                        await connection.execute(sql, t, b, u)
-                    except Exception as e:
-                        print(f"Ошибка вставки данных в {table_name}: {e}")
+        for row in rows:
+            try:
+                t = float(row.get('time', 0))
+                b = float(row.get('bpm', 0))
+                u = float(row.get('uterus', 0))
+                await self.db_master.execute_query(sql, (t, b, u))
+            except Exception as e:
+                print(f"Ошибка вставки данных в {table_name}: {e}")
 
-    async def stream_data_async(self):
+    async def stream_data_async(self) -> None:
+        """
+        Асинхронно запустить эмуляцию отправки данных из обоих файлов,
+        с записью порций данных в базу с указанной задержкой.
+        """
         self._load_data()
-        await self._init_db_pool()
-
         idx1, idx2 = 0, 0
         len1, len2 = len(self.data1), len(self.data2)
 
         while idx1 < len1 or idx2 < len2:
-            rows1 = []
-            rows2 = []
+            rows1: List[Dict[str, Any]] = []
+            rows2: List[Dict[str, Any]] = []
 
             if idx1 < len1:
                 rows1 = self.data1[idx1:idx1 + self.chunk_size]
@@ -87,25 +115,3 @@ class AsyncDualFolderEmulator:
 
             await asyncio.sleep(self.delay)
 
-        await self.close()
-
-if __name__ == "__main__":
-    db_config = {
-        "user": "your_user",
-        "password": "your_password",
-        "database": "your_database",
-        "host": "localhost",
-        "port": 5433,
-    }
-
-    emulator = AsyncDualFolderEmulator(
-        folder1='joined_data_hyp',
-        folder2='joined_data_reg',
-        chunk_size=1,
-        delay=1.0,
-        db_config=db_config
-    )
-
-    asyncio.run(emulator.stream_data_async())
-#короче предполгается что в бд есть 2 таблицы hypoxia_table и 
-#regular_table, оттуда данные и тянутся

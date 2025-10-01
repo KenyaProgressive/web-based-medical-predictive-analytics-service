@@ -21,3 +21,103 @@ CONFIG:
 Уведомления (факт):
 - Время
 - Приоритетность (из конфига)
+
+
+
+
+
+
+
+
+
+
+
+    let dec_early = {
+        'value': 1,
+        'status': CARD_STATUSES.OK,
+        'title': "Ранние децелерации",
+        'rows': 1,
+        'cols': 1
+    }
+
+    let dec_late = {
+        'value': 1,
+        'status': 1,
+        'title': "Поздние децелерации",
+        'rows': 1,
+        'cols': 1
+    }
+
+
+    let decelarations = {
+        'dec_early': dec_early,
+        'dec_late': dec_late
+    }
+
+    let hr_variability = {
+        'value': 1,
+        'status': CARD_STATUSES.OK,
+        'title': "Вариабильность",
+        'rows': 1,
+        'cols': 1
+    }
+
+    let accelerations = {
+        'value': 1,
+        'status': 2,
+        'title': "Акцелерации",
+        'rows': 1,
+        'cols': 1
+    }
+
+    let heart_rate = {
+        'value': 1,
+        'status': 1,
+        'title': "ЧСС",
+        'rows': 1,
+        'cols': 1
+    }
+
+    let hypoxy = {
+        'status': CARD_STATUSES.warn_status,
+        'title': "Гипоксия",
+        'priority': "4"
+    };
+
+    let tachycardia = {
+        'status': CARD_STATUSES.OK,
+        'title': "Тахикардия",
+    }
+
+    let bradycardia = {
+        'status': CARD_STATUSES.OK,
+        'title': "Брадикардия",
+    }
+
+    let state = {
+        'card_params': [heart_rate, accelerations, hr_variability, decelarations.dec_early, decelarations.dec_late],
+        'notify_params': [hypoxy, tachycardia, bradycardia],
+        'decelarations': [],
+        'events': []
+    };
+
+    let decelerations_per_30_min = [
+        {
+            'apmlitude': 30,
+            'duration': 15,
+            // всякая прочая хуйня
+            'type': "late"
+        },
+        {
+            'apmlitude': 30,
+            'duration': 15,
+            // всякая прочая хуйня
+            'type': "early"
+        },
+        {
+            'apmlitude': 30,
+            'duration': 15,
+            // всякая прочая хуйня
+            'type': "huy"
+        }
+    ];

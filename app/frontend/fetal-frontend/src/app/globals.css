@@ -120,3 +120,31 @@
     @apply bg-background text-foreground;
   }
 }
+
+@theme {
+  
+  --animate-alert: alert 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  @keyframes alert {
+    50% {
+      background-color: #eb4a2d;
+      /* filter: hue-rotate(140); */
+      transform:scale(1.007);
+
+    }
+  }
+
+  --animate-warn: warn 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  @keyframes warn {
+    50% {
+      background-color: #f5c75d;
+
+      /* filter: brightness(1.1); */
+    }
+  }
+}
+/* keyframes pulser {
+    50% {
+      opacity: 0.5;
+    }
+  } */
+  

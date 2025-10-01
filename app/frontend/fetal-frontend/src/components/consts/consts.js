@@ -1,4 +1,4 @@
-export const DASHBOARD_ANIMATION = "transition-colors duration-500 ease-out-in"
+export const DASHBOARD_ANIMATION = "transition-colors duration-200 ease-out-in"
 
 export const STATUS_STYLES = {
     0: "bg-slate-100 ",     // ok_status

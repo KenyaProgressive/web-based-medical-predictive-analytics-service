@@ -43,7 +43,7 @@ const useAlertHistoryState = () => {
 export default function AlertHistory() {
 
     const { data, isLoading, error } = useAppState();
-    const state = !isLoading ? data.state.notifications : [{ "values": [] }, { "values": [] }];
+    const state = !isLoading && data ? data.state.notifications : [{ "values": [] }, { "values": [] }];
 
     return (
         <div className="grid grid-cols-2 bg-slate-400 w-full min-h-[300px] h-full p-0 gap-2">

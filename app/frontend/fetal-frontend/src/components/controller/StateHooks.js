@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const fetchAllData = async () => {
     const response = await fetch('http://localhost:8080/getState');
     if (!response.ok) {
+        console.log("from error ");
         throw new Error('Ошибка сети');
+
     }
+    // console.log("from fetchAllData ", response.json());
     return response.json();
 };
 

@@ -9,39 +9,9 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/view/card"
-import { useEffect, useState, useRef } from "react";
-import { defaultDashboard } from "../DefaultStates";
 import { STATUS_STYLES } from "@/components/consts/consts"
 
-const useAlertHistoryState = () => {
-    const [dashboardData, setDashboardData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await fetch('/getDashboardState');
-                if (!response.ok) throw new Error('Ошибка сети');
-                const data = await response.json();
-                setDashboardData(data);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchData();
-        const intervalId = setInterval(fetchData, 1000);
-        return () => clearInterval(intervalId);
-    }, []);
-
-    return { dashboardData, isLoading, error };
-};
-
 export default function AlertHistory() {
-
     const { data, isLoading, error } = useAppState();
     const state = !isLoading && data ? data.state.notifications : [{ "values": [] }, { "values": [] }];
 

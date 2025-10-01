@@ -2,11 +2,13 @@
   "name": "fetal-frontend",
   "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "proxy": "http://localhost:8080",
   "scripts": {
     "dev": "next dev ",
     "build": "next build ",
     "start": "next start",
+    "export": "next export",
     "lint": "eslint"
   },
   "dependencies": {

@@ -24,6 +24,7 @@ export default function Dashboard() {
         console.log("clicked ", isPolling);
         setIsPolling(!isPolling);
     }
+    console.log("from Dashboard ", state);
     return (
         <div className="w-full h-full grid grid-cols-2 grid-rows-4 gap-2">
             {state.card_params.map(param =>

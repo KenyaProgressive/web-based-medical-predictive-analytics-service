@@ -61,7 +61,7 @@ class DataHandler:
                 print("Задача остановлена.")
 
 # пример использования:
-# handler = DataHandler(db_master, bpm_table='bpm_table', uterus_table='uterus_table')
+# handler = DataHandler(db_master, bpm_table='bpm_table', uterus_table='uterus_table') или какие там таблицы
 # handler.start()
 
 # Программа продолжает работать, DataHandler в фоне собирает и анализирует данные

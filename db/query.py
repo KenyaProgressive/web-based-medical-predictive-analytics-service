@@ -1,15 +1,11 @@
-CREATE_TABLE_HYPOXIA = """
-CREATE TABLE IF NOT EXISTS hypoxia_table (
-    id SERIAL PRIMARY KEY,
-    time TIMESTAMP NOT NULL,
-    value INT
-);
-"""
+CREATE_TABLE_BPM = """CREATE TABLE IF NOT EXISTS bpm(
+    id serial PRIMARY KEY,
+    time FLOAT NOT NULL,
+    bpm FLOAT
+)"""
 
-CREATE_TABLE_REGULAR = """
-CREATE TABLE IF NOT EXISTS regular_table (
-    id SERIAL PRIMARY KEY,
-    time TIMESTAMP NOT NULL,
-    value INT
-);
-"""
+CREATE_TABLE_UTERUS = """CREATE TABLE IF NOT EXISTS uterus(
+    id serial PRIMARY KEY,
+    time FLOAT NOT NULL,
+    uterus FLOAT
+)"""

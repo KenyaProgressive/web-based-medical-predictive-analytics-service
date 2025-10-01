@@ -1,8 +1,13 @@
 import asyncio
 import csv
 import os
+<<<<<<< HEAD
 from typing import List, Dict, Any
 from db.db_config import DbMaster
+=======
+import asyncpg
+from datetime import time
+>>>>>>> origin/new_db_scheme
 
 
 
@@ -46,8 +51,31 @@ class AsyncFileEmulator:
         self.bpm_data = self._load_csv(self.bpm_file)
         self.uterus_data = self._load_csv(self.uterus_file)
 
+<<<<<<< HEAD
     async def _insert_rows(self, table_name: str, rows: List[Dict[str, Any]]) -> None:
         if not rows:
+=======
+    def _load_csv_from_file(self, filename):
+        data = []
+        if not os.path.exists(filename):
+            print(f"Файл {filename} не найден")
+            return data
+        try:
+            with open(filename, newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                data = list(reader)
+        except Exception as e:
+            print(f"Ошибка чтения файла {filename}: {e}")
+        return data
+
+
+    def _load_data(self):
+        self.data1 = self._load_csv_from_file(self.folder1)
+        self.data2 = self._load_csv_from_file(self.folder2)
+
+    async def _insert_rows(self, table_name, rows):
+        if not rows or not self.pool:
+>>>>>>> origin/new_db_scheme
             return
         sql = f"""
             INSERT INTO {table_name} (time, bpm, uterus)
@@ -88,9 +116,18 @@ class AsyncFileEmulator:
             await self._insert_rows('hypoxia_table', bpm_chunk)
             await self._insert_rows('regular_table', uterus_chunk)
 
+<<<<<<< HEAD
             print(f"Отправлено в hypoxia_table: {len(bpm_chunk)} записей")
             print(f"Отправлено в regular_table: {len(uterus_chunk)} записей")
             print("---")
+=======
+            await self._insert_rows('bpm', rows1)
+            await self._insert_rows('uterus', rows2)
+
+            # print(f"Отправлено в hypoxia_table: {len(rows1)} строк")
+            # print(f"Отправлено в regular_table: {len(rows2)} строк")
+            print('---')
+>>>>>>> origin/new_db_scheme
 
             await asyncio.sleep(self.delay)
 

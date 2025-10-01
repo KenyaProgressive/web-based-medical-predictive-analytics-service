@@ -123,22 +123,25 @@
 
 @theme {
   
-  --animate-alert: alert 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-alert: alert 0.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   @keyframes alert {
     50% {
       background-color: #eb4a2d;
-      /* filter: hue-rotate(140); */
       transform:scale(1.007);
-
+      opacity: 0.9;
+    }
+    0% {
+      background-color: #e02222;
+      transform:scale(1);
+      opacity: 1;
     }
   }
 
-  --animate-warn: warn 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-warn: warn 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   @keyframes warn {
     50% {
-      background-color: #f5c75d;
-
-      /* filter: brightness(1.1); */
+      background-color: #faea37;
+      opacity: 0.9;
     }
   }
 }

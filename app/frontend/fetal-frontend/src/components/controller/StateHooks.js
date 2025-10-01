@@ -9,10 +9,11 @@ const fetchAllData = async () => {
     return response.json();
 };
 
-export const useAppState = () => {
+export const useAppState = (isEnabled = false) => {
     return useQuery({
         queryKey: ['allState'],
         queryFn: fetchAllData,
-        refetchInterval: 1000,
+        refetchInterval: 500,
+        enabled: isEnabled,
     });
 };

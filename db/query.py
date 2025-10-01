@@ -1,6 +1,15 @@
-CREATE_TABLE_PARAMETRES = """CREATE TABLE IF NOT EXISTS parametres(
-    id serial PRIMARY KEY,
-    get_data_time TIMESTAMPTZ DEFAULT now(),
-    bpm INTEGER,
-    uterus FLOAT
-)"""
+CREATE_TABLE_HYPOXIA = """
+CREATE TABLE IF NOT EXISTS hypoxia_table (
+    id SERIAL PRIMARY KEY,
+    time TIMESTAMP NOT NULL,
+    value INT
+);
+"""
+
+CREATE_TABLE_REGULAR = """
+CREATE TABLE IF NOT EXISTS regular_table (
+    id SERIAL PRIMARY KEY,
+    time TIMESTAMP NOT NULL,
+    value INT
+);
+"""

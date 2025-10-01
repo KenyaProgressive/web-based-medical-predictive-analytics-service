@@ -1,74 +1,52 @@
 import asyncio
 import csv
 import os
-from typing import List, Optional, Dict, Any
-from db_config import DbMaster  # Импорт нашего класса DbMaster
+from typing import List, Dict, Any
+from db.db_config import DbMaster
+
 
 
 class AsyncFileEmulator:
     """
-    Асинхронный эмулятор потоковой передачи данных из двух CSV-файлов
-    с записью данных в PostgreSQL через класс DbMaster.
-
-    Эмулятор последовательно читает записи из двух CSV-файлов,
-    по одной записи за раз с задержкой delay,
-    и асинхронно вставляет их в соответствующие таблицы базы данных.
+    Асинхронный эмулятор, который читает два CSV файла:
+    bpm.csv и uterus.csv, и вставляет их данные в две таблицы:
+    hypoxia_table и regular_table.
+    
+    Формат CSV:
+    time_sec,value
     """
 
     def __init__(self,
-                 file1: str,
-                 file2: str,
+                 bpm_file: str,
+                 uterus_file: str,
                  db_master: DbMaster,
                  chunk_size: int = 1,
                  delay: float = 1.0) -> None:
-        """
-        Инициализация эмулятора.
-
-        :param file1: Путь к первому CSV-файлу (данные hypoxia).
-        :param file2: Путь ко второму CSV-файлу (данные regular).
-        :param db_master: Инстанс класса DbMaster для работы с базой.
-        :param chunk_size: Количество записей для отправки за один шаг.
-        :param delay: Задержка в секундах между отправками данных.
-        """
-        self.file1 = file1
-        self.file2 = file2
+        self.bpm_file = bpm_file
+        self.uterus_file = uterus_file
         self.db_master = db_master
         self.chunk_size = chunk_size
         self.delay = delay
-        self.data1: List[Dict[str, Any]] = []
-        self.data2: List[Dict[str, Any]] = []
+        self.bpm_data: List[Dict[str, Any]] = []
+        self.uterus_data: List[Dict[str, Any]] = []
 
-    def _load_csv_from_file(self, filename: str) -> List[Dict[str, Any]]:
-        """
-        Загрузить данные из CSV-файла в список словарей.
-
-        :param filename: Путь к CSV-файлу.
-        :return: Список записей, где каждая запись - словарь колонок.
-        """
-        data: List[Dict[str, Any]] = []
+    def _load_csv(self, filename: str) -> List[Dict[str, Any]]:
         if not os.path.exists(filename):
             print(f"Файл {filename} не найден")
-            return data
+            return []
         try:
             with open(filename, newline='', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
-                data = list(reader)
+                return list(reader)
         except Exception as e:
-            print(f"Ошибка чтения файла {filename}: {e}")
-        return data
+            print(f"Ошибка чтения {filename}: {e}")
+            return []
 
     def _load_data(self) -> None:
-        """Загрузить данные из обоих CSV-файлов в память."""
-        self.data1 = self._load_csv_from_file(self.file1)
-        self.data2 = self._load_csv_from_file(self.file2)
+        self.bpm_data = self._load_csv(self.bpm_file)
+        self.uterus_data = self._load_csv(self.uterus_file)
 
     async def _insert_rows(self, table_name: str, rows: List[Dict[str, Any]]) -> None:
-        """
-        Асинхронно вставить записи в таблицу базы данных.
-
-        :param table_name: Имя таблицы для вставки.
-        :param rows: Список словарей с данными для вставки.
-        """
         if not rows:
             return
         sql = f"""
@@ -77,40 +55,42 @@ class AsyncFileEmulator:
         """
         for row in rows:
             try:
-                t = float(row.get('time', 0))
-                b = float(row.get('bpm', 0))
-                u = float(row.get('uterus', 0))
-                await self.db_master.execute_query(sql, (t, b, u))
+                t = float(row.get('time_sec', row.get('time', 0)))  # время в секундах из CSV
+                val = float(row.get('value', 0))
+                # В таблице hypoxia_table и regular_table есть 3 поля:
+                # time, bpm, uterus. Нам нужно заполнить данные:
+                # Для bpm.csv: time = t, bpm = val, uterus = NULL
+                # Для uterus.csv: time = t, bpm = NULL, uterus = val
+                if table_name == 'hypoxia_table':
+                    await self.db_master.execute_query(sql, (t, val, None))
+                else:  
+                    await self.db_master.execute_query(sql, (t, None, val))
             except Exception as e:
-                print(f"Ошибка вставки данных в {table_name}: {e}")
+                print(f"Ошибка вставки в {table_name}: {e}")
 
     async def stream_data_async(self) -> None:
-        """
-        Асинхронно запустить эмуляцию отправки данных из обоих файлов,
-        с записью порций данных в базу с указанной задержкой.
-        """
         self._load_data()
-        idx1, idx2 = 0, 0
-        len1, len2 = len(self.data1), len(self.data2)
+        idx_bpm, idx_uterus = 0, 0
+        len_bpm, len_uterus = len(self.bpm_data), len(self.uterus_data)
 
-        while idx1 < len1 or idx2 < len2:
-            rows1: List[Dict[str, Any]] = []
-            rows2: List[Dict[str, Any]] = []
+        while idx_bpm < len_bpm or idx_uterus < len_uterus:
+            bpm_chunk = []
+            uterus_chunk = []
 
-            if idx1 < len1:
-                rows1 = self.data1[idx1:idx1 + self.chunk_size]
-                idx1 += self.chunk_size
+            if idx_bpm < len_bpm:
+                bpm_chunk = self.bpm_data[idx_bpm:idx_bpm + self.chunk_size]
+                idx_bpm += self.chunk_size
 
-            if idx2 < len2:
-                rows2 = self.data2[idx2:idx2 + self.chunk_size]
-                idx2 += self.chunk_size
+            if idx_uterus < len_uterus:
+                uterus_chunk = self.uterus_data[idx_uterus:idx_uterus + self.chunk_size]
+                idx_uterus += self.chunk_size
 
-            await self._insert_rows('hypoxia_table', rows1)
-            await self._insert_rows('regular_table', rows2)
+            await self._insert_rows('hypoxia_table', bpm_chunk)
+            await self._insert_rows('regular_table', uterus_chunk)
 
-            print(f"Отправлено в hypoxia_table: {len(rows1)} строк")
-            print(f"Отправлено в regular_table: {len(rows2)} строк")
-            print('---')
+            print(f"Отправлено в hypoxia_table: {len(bpm_chunk)} записей")
+            print(f"Отправлено в regular_table: {len(uterus_chunk)} записей")
+            print("---")
 
             await asyncio.sleep(self.delay)
 

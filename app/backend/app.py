@@ -2,9 +2,19 @@ import random
 from time import sleep
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
-global count
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 app = FastAPI()
+
+out_path = os.path.join(os.path.dirname( __file__ ), '../frontend/fetal-frontend/out')
+
+# Монтируем статические файлы (CSS, JS, изображения)
+app.mount("/_next", StaticFiles(directory=os.path.join(out_path, "_next")), name="_next")
+app.mount("/static", StaticFiles(directory=os.path.join(out_path, "_next","static")), name="static")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -12,64 +22,29 @@ app.add_middleware(
         # У Реакта свой мини-сервер для быстрой отладки, я говорил.
         # У него порт 3000, поэтому разрешаем подключение с 3000 порта
         "http://localhost:3000",
+        "http://localhost:8080",
         # Возможно придется делать то же самое для итоговой версии, но по идее нет.
     ],
     allow_credentials=True,
     allow_methods=["GET"],
 )
 
-@app.get("/test")
-async def connection_test():
-    return {"status": "SUCCESS"}
+# @app.get("/")
+# async def connection_test():
+#     return {"status": "SUCCESS"}
 
 
 # Вот тут тебе нужно короче досоставить стейт по образцу и раскидать в него значения из ML-слоя
 # Самое сложное будет следить за полем current_notifications
 
-# count = 1 # временная переменная для временного дебага
 
-@app.get("/getNotifications")
-async def get_notifications():
-    sleep(0.5)
+# STATUSES: 0 = OK (green), 1 = WARN (yellow), 2 = ALERT (red) 
+# МАКСИМАЛЬНЫЙ РАЗМЕР СПИСКА УВЕДОМЛЕНИЙ = 8
 
-    notifications = [
-            {
-                'title': "Фактические уведомления",
-                'values': [
-                    {
-                        'title':"Гипоксия",
-                        'description':"Ваще пиздец всему",
-                        'status':2,
-                        'id' : 88
-                    },
-                    {
-                        'title':"Децелерация",
-                        'description':"Ну такое",
-                        'status':1,
-                        'id' : 99
-                    }
-                ],
-            },
-            {
-                'title': "Предиктивные уведомления",
-                'values': [
-                    {
-                        'title':"Хуепоксия",
-                        'description':"Ваще пиздец всему",
-                        'status':2,
-                        'id' : 81
-                    },
-                    {
-                        'title':"Хулелерация",
-                        'description':"Ну такое",
-                        'status':1,
-                        'id' : 91
-                    }],
-            }
-        ]
-    return {'notifications': notifications}
-    
+# if it.priority > priority then delete and push
+# if it.priotiy == priority then if it.time > it.time then delete and push
 
+# запись в файл сразу как получил с ML
 
 @app.get("/getState")
 async def connection_test():
@@ -121,12 +96,14 @@ async def connection_test():
                         'title':"Высокий риск гипоксии",
                         'description':"Ваще пиздец всему",
                         'status':2,
+                        'priority':2,
                         'id' : 88
                     },
                     {
                         'title':"Децелерация",
                         'description':"Ну такое",
                         'status':1,
+                        'priority':2,
                         'id' : 99
                     }
                 ],
@@ -153,35 +130,7 @@ async def connection_test():
     
     return {'state': state}
 
-
-
-# @app.get("/test/jigle_bell")
-# async def connection_test():
-    
-#     global status_jigle
-
-#     status_jigle = (status_jigle % 3) + 1
-
-#     state = {
-#         'card_params': [
-#                 {
-#                 'value': 1,
-#                 'status': (status_jigle % 3)+1,
-#                 'title': "ЧСС",
-#                 'rows': 1,
-#                 'cols': 1,
-#                 'id': 1
-#                 },
-#             {
-#                 'value': 1,
-#                 'status': status_jigle,
-#                 'title': "Сокращения матки",
-#                 'rows': 1,
-#                 'cols': 1,
-#                 'id': 2
-#             }
-
-#         ]
-#     }
-    
-#     return {'state': state}
+# Все остальные запросы отправляем на index.html
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    return FileResponse(os.path.join(out_path, "index.html"))

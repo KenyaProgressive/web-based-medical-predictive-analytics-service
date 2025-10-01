@@ -12,6 +12,8 @@ POSTGRES_DB = os.getenv("POSTGRES_DB")
 ## COMMON
 
 LOCALHOST_ADDRESS: str = "127.0.0.1"
+CSV_PATH_1: str = "app/emulator/20250908-07500001_1.csv"
+CSV_PATH_2: str = "app/emulator/20250908-07500001_2.csv"
 
 ## UVICORN
 
@@ -43,7 +45,7 @@ COMPRESSION_FORMAT: str = "zip" ## Сжатие логов в .zip после р
 SUCCESS_CLOSE_POOL_MESSAGE: str = "Пул соединений успешно закрыт"
 POOL_DOESNT_EXIST_OR_CLOSED: str = "Пул не существует или уже был закрыт"
 
+## ML
 
-
-
-
+MIN_TIME: int = 60 * 28
+MAX_TIME: int = 60 * 32

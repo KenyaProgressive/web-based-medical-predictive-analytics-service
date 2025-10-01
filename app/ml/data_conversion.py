@@ -1,13 +1,19 @@
+from typing import List
 import pandas as pd
 
-def merging_time(data: pd.DataFrame):
-    """
-    Функция для объединения файлов датасета в один файл с единым таймлайном
-    """
+def join_data(files: List[str]) -> pd.DataFrame:
+    """Функция для объединения файлов датасета в один файл с единым таймлайном"""
+    united_df: pd.DataFrame = pd.DataFrame()
 
-    time_since_beginning = 0
-    for row in data.itertuples():
-        if data.loc[row.Index, 'time_sec'] == 0 and row.Index > 0:
-            time_since_beginning = data.loc[row.Index - 1, 'time_sec']
+    time_since_beginning: float = 0
+    for file in files:
+        df: pd.DataFrame = pd.read_csv(file)
+        df.rename(columns={'time_sec': 'time'}, inplace=True)
 
-        data.loc[row.Index, 'time_sec'] += time_since_beginning
+        df['time'] += time_since_beginning
+
+        united_df = pd.concat([united_df, df], ignore_index=True)
+
+        time_since_beginning = united_df['time'].max()
+
+    return united_df

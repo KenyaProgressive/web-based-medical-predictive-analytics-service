@@ -33,20 +33,19 @@ export default function Dashboard() {
 
             <Dialog>
                 <DialogTrigger>
-                    <div variant="outline" className="rounded-sm flex justify-center items-center w-full h-[70px] bg-slate-200 hover:bg-slate-100"><p className="font-bold">Import</p></div>
+                    <div variant="outline" className="rounded-sm flex justify-center items-center w-full h-[50px] bg-slate-200 hover:bg-slate-100"><p className="font-bold">Import</p></div>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Вставьте ссылку на CSV файл</DialogTitle>
                         <DialogDescription>
-                            This action cannot be undone. This will permanently delete your account
-                            and remove your data from our servers.
+                            Фича еще не готова.
                         </DialogDescription>
                     </DialogHeader>
                 </DialogContent>
             </Dialog>
 
-            <Button onClick={() => triggerPolling()} variant="outline" className="font-bold w-full h-[70px] bg-slate-200">
+            <Button onClick={() => triggerPolling()} variant="outline" className="font-bold w-full h-[50px] bg-slate-200">
                 {isPolling ? "Закончить процедуру" : "Начать процедуру"}
             </Button>
         </div >

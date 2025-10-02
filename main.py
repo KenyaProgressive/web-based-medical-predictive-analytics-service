@@ -21,20 +21,11 @@ from app.emulator.datahandler import DataHandler
 from app.config import CommonLogger
 from app.ml.data_conversion import join_data
 
-from app.emulator.emulator import AsyncFileEmulator  # импортируйте ваш эмулятор здесь
+from app.emulator.emulator import AsyncFileEmulator
 
 
 async def main():
-
-    bpm_files = glob('db/data/hypoxia/1/bpm/*.csv')
-    uterus_files = glob('db/data/hypoxia/1/uterus/*.csv')
-
-    bpm_df = join_data(bpm_files)
-    uterus_df = join_data(uterus_files)
-
-    bpm_df.to_csv(CSV_PATH_1, index=False)
-    uterus_df.to_csv(CSV_PATH_2, index=False)
-
+    
     db_master: DbMaster = await DbMaster.create_pool(
         dsn=DB_CONNECTION_LINK
     )
@@ -51,22 +42,12 @@ async def main():
         bpm_file=CSV_PATH_1,
         uterus_file=CSV_PATH_2,
         db_master=db_master
-        # delay=0.25,
-        # db_config={
-        #     "user": POSTGRES_USER,
-        #     "password": POSTGRES_PASSWORD,
-        #     "database": POSTGRES_DB,
-        #     "host": LOCALHOST_ADDRESS,
-        #     "port": DB_PORT
-        # }
     )
     datahandler = DataHandler(db_master=db_master, bpm_table="bpm", uterus_table="uterus")
 
-    await asyncio.gather(emulator.stream_data_async(), datahandler.start())
+    await asyncio.gather(emulator.stream_data_async(), datahandler.start(),  uvicorn.run(APP_PATH, host=LOCALHOST_ADDRESS, port=PORT, reload=True))
 
-    # uvicorn.run(APP_PATH, host=LOCALHOST_ADDRESS, port=PORT, reload=True)
-
-    
+   
 
 if __name__ == "__main__":
     asyncio.run(main())

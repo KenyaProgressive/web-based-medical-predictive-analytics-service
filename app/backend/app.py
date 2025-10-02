@@ -4,16 +4,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
+from app.const import OUT_PATH
+
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from app.ml.get_ctg_data import get_ctg_data
 
 app = FastAPI()
 
-out_path = os.path.join(os.path.dirname( __file__ ), '../frontend/fetal-frontend/out')
-
 # Монтируем статические файлы (CSS, JS, изображения)
-app.mount("/_next", StaticFiles(directory=os.path.join(out_path, "_next")), name="_next")
-app.mount("/static", StaticFiles(directory=os.path.join(out_path, "_next","static")), name="static")
+app.mount("/_next", StaticFiles(directory=os.path.join(OUT_PATH, "_next")), name="_next")
+app.mount("/static", StaticFiles(directory=os.path.join(OUT_PATH, "_next","static")), name="static")
 
 
 app.add_middleware(
@@ -29,16 +30,11 @@ app.add_middleware(
     allow_methods=["GET"],
 )
 
-# @app.get("/")
-# async def connection_test():
-#     return {"status": "SUCCESS"}
-
 
 # Вот тут тебе нужно короче досоставить стейт по образцу и раскидать в него значения из ML-слоя
 # Самое сложное будет следить за полем current_notifications
 
 
-# STATUSES: 0 = OK (green), 1 = WARN (yellow), 2 = ALERT (red) 
 # МАКСИМАЛЬНЫЙ РАЗМЕР СПИСКА УВЕДОМЛЕНИЙ = 8
 
 # if it.priority > priority then delete and push
@@ -47,10 +43,10 @@ app.add_middleware(
 # запись в файл сразу как получил с ML
 
 @app.get("/getState")
-async def connection_test():
+async def get_state():
     # sleep(0.5)
 
-    rand_status = random.randint(1,3)
+    ctg_data = get_ctg_data()
 
     state = {
         'card_params': [

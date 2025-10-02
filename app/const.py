@@ -15,11 +15,11 @@ LOCALHOST_ADDRESS: str = "127.0.0.1"
 CSV_PATH_1: str = "app/emulator/20250908-07500001_1.csv"
 CSV_PATH_2: str = "app/emulator/20250908-07500001_2.csv"
 
+
 ## UVICORN
 
 PORT: int = 8080
 APP_PATH: str = "app.backend.app:app"
-
 
 
 ## TODO: впоследствии DB VARS перенести в .env 
@@ -28,6 +28,7 @@ DB_PORT: int = 5433
 NO_ARGS: tuple = () ## Пустой кортеж для передачи в db_master при отсутствии аргументов
 
 DB_CONNECTION_LINK: str = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{LOCALHOST_ADDRESS}:{DB_PORT}/{POSTGRES_DB}"
+
 ## LOGGERS CONF
 
 DB_LOG_PATH: str = "app/logs/db_logs/db_log.log" ## Путь для сохранения логов ДБ-логгера
@@ -48,3 +49,10 @@ POOL_DOESNT_EXIST_OR_CLOSED: str = "Пул не существует или уж
 
 MIN_TIME: int = 60 * 28
 MAX_TIME: int = 60 * 32
+
+## BACK_TO_FRONT
+
+STATUS_OK: int = 0
+STATUS_WARN: int = 1
+STATUS_ALERT: int = 2
+OUT_PATH: str = os.path.join(os.path.dirname( __file__ ), '../frontend/fetal-frontend/out')

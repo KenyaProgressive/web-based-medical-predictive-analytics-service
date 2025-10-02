@@ -114,4 +114,3 @@ class AsyncFileEmulator:
             print('---')
 
             await asyncio.sleep(self.delay)
-

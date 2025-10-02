@@ -15,7 +15,7 @@ from app.const import (
     CSV_PATH_1,
     CSV_PATH_2,
 )
-from app.emulator.emulator import AsyncDualFolderEmulator
+from app.emulator.emulator import AsyncFileEmulator
 from app.config import CommonLogger
 
 
@@ -33,17 +33,18 @@ async def main():
         CommonLogger.error(e)
 
     
-    emulator = AsyncDualFolderEmulator(
-        folder1=CSV_PATH_1,
-        folder2=CSV_PATH_2,
-        delay=0.25,
-        db_config={
-            "user": POSTGRES_USER,
-            "password": POSTGRES_PASSWORD,
-            "database": POSTGRES_DB,
-            "host": LOCALHOST_ADDRESS,
-            "port": DB_PORT
-        }
+    emulator = AsyncFileEmulator(
+        file1=CSV_PATH_1,
+        file2=CSV_PATH_2,
+        db_master=db_master
+        # delay=0.25,
+        # db_config={
+        #     "user": POSTGRES_USER,
+        #     "password": POSTGRES_PASSWORD,
+        #     "database": POSTGRES_DB,
+        #     "host": LOCALHOST_ADDRESS,
+        #     "port": DB_PORT
+        # }
     )
 
     await emulator.stream_data_async()

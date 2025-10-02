@@ -45,10 +45,10 @@ class DbMaster:
             try:
                 if len(args) == 0: ## Если один аргументов нет, то используем execute без args
                     await conn.execute(query)
-                elif len(args) == 1:
-                    await conn.execute(query, *args) ## Если один аргумент, используем execute
                 else:
-                    await conn.executemany(query, *args)
+                    await conn.execute(query, *args) ## Если один аргумент, используем execute
+                # else:
+                #     await conn.executemany(query, *args)
             except Exception as e:
                 await self.__do_error_log(e)
 

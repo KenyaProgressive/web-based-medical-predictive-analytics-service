@@ -15,6 +15,11 @@ class DataHandler:
         self.interval = interval
         self.start_time = datetime.utcnow()  # запоминает время старта
         self._task: asyncio.Task = None
+        self.__result = {}
+
+    @property
+    def result(self):
+        return self.__result
 
     async def _fetch_recent_data(self, table_name: str, since_time: datetime) -> List[Record]:
         query = f"""SELECT * FROM {table_name} WHERE time >= $1 ORDER BY time;"""
@@ -38,6 +43,7 @@ class DataHandler:
         uterus_df = pd.DataFrame([{ 'time': r['time'], 'uterus': r['uterus']} for r in uterus_records])
 
         result = get_ctg_data(bpm_df=bpm_df, uterus_df=uterus_df)
+        self.__result = result
         print(result)
         # Дальше делать с result что надо (лог, отправка и т.д.)
 

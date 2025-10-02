@@ -106,10 +106,10 @@ class AsyncFileEmulator:
                 rows2 = self.data2[idx2:idx2 + self.chunk_size]
                 idx2 += self.chunk_size
 
-            await self._insert_rows('parametres', rows1)
-            # await self._insert_rows('regular_table', rows2)
+            await self._insert_rows('bpm', rows1)
+            await self._insert_rows('uterus', rows2)
 
-            print(f"Отправлено в hypoxia_table: {len(rows1)} строк")
+            # print(f"Отправлено в hypoxia_table: {len(rows1)} строк")
             # print(f"Отправлено в regular_table: {len(rows2)} строк")
             print('---')
 

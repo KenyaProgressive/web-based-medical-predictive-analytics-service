@@ -3,7 +3,7 @@ import uvicorn
 from db.query import CREATE_TABLE_BPM, CREATE_TABLE_UTERUS
 from db.db_config import DbMaster
 from app.const import (
-    DB_CONNECTION_LINK, 
+    DB_CONNECTION_LINK,
     NO_ARGS,
     LOCALHOST_ADDRESS,
     PORT,
@@ -18,10 +18,12 @@ from app.const import (
 from app.emulator.emulator import AsyncFileEmulator
 from app.config import CommonLogger
 
+from app.emulator.emulator import AsyncFileEmulator  # импортируйте ваш эмулятор здесь
+
 
 async def main():
 
-    db_master: DbMaster = await DbMaster.create_pool(       
+    db_master: DbMaster = await DbMaster.create_pool(
         dsn=DB_CONNECTION_LINK
     )
 

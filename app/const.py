@@ -27,8 +27,7 @@ APP_PATH: str = "app.backend.app:app"
 DB_PORT: int = 5433
 NO_ARGS: tuple = () ## Пустой кортеж для передачи в db_master при отсутствии аргументов
 
-DB_CONNECTION_LINK: str = f"postgres://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{LOCALHOST_ADDRESS}:{DB_PORT}/{POSTGRES_DB}"
-
+DB_CONNECTION_LINK: str = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{LOCALHOST_ADDRESS}:{DB_PORT}/{POSTGRES_DB}"
 ## LOGGERS CONF
 
 DB_LOG_PATH: str = "app/logs/db_logs/db_log.log" ## Путь для сохранения логов ДБ-логгера

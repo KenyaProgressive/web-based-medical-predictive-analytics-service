@@ -4,8 +4,8 @@ from typing import List
 from asyncpg import Record
 import pandas as pd
 
-from db_config import DbMaster
-from app.ml.your_ctg_module import get_ctg_data  # поправить на верный модуль
+from db.db_config import DbMaster
+# TODO: from app.ml.your_ctg_module import get_ctg_data  # поправить на верный модуль
 
 
 class DataHandler:

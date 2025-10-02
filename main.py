@@ -36,8 +36,8 @@ async def main():
 
     
     emulator = AsyncFileEmulator(
-        file1=CSV_PATH_1,
-        file2=CSV_PATH_2,
+        bpm_file=CSV_PATH_1,
+        uterus_file=CSV_PATH_2,
         db_master=db_master
         # delay=0.25,
         # db_config={

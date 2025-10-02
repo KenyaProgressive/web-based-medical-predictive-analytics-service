@@ -5,8 +5,7 @@ from asyncpg import Record
 import pandas as pd
 
 from db.db_config import DbMaster
-# TODO: from app.ml.your_ctg_module import get_ctg_data  # поправить на верный модуль
-
+from app.ml.get_ctg_data import get_ctg_data
 
 class DataHandler:
     def __init__(self, db_master: DbMaster, bpm_table: str, uterus_table: str, interval: float = 4.0) -> None:
@@ -20,23 +19,25 @@ class DataHandler:
     async def _fetch_recent_data(self, table_name: str, since_time: datetime) -> List[Record]:
         query = f"""
             SELECT * FROM {table_name}
-            WHERE get_data_time >= $1
-            ORDER BY get_data_time
+            WHERE time >= $1
+            ORDER BY time
         """
         records = await self.db_master.get_data_from_db(query, False, since_time)
         return records or []
 
     async def _send_to_ml(self):
         now = datetime.utcnow()
-        time_threshold = max(self.start_time, now - timedelta(minutes=30))  # начало интервала для выборки
+        time_threshold = max(self.start_time, now - timedelta(minutes=30)) # начало интервала для выборки
+        float_timestamp = time_threshold.timestamp()
 
-        bpm_records = await self._fetch_recent_data(self.bpm_table, time_threshold)
-        uterus_records = await self._fetch_recent_data(self.uterus_table, time_threshold)
+        bpm_records = await self._fetch_recent_data(self.bpm_table, float_timestamp)
+        uterus_records = await self._fetch_recent_data(self.uterus_table, float_timestamp)
 
-        bpm_df = pd.DataFrame([{ 'time': r['get_data_time'], 'bpm': r['bpm']} for r in bpm_records])
-        uterus_df = pd.DataFrame([{ 'time': r['get_data_time'], 'uterus': r['uterus']} for r in uterus_records])
+        bpm_df = pd.DataFrame([{ 'time': r['time'], 'bpm': r['bpm']} for r in bpm_records])
+        uterus_df = pd.DataFrame([{ 'time': r['time'], 'uterus': r['uterus']} for r in uterus_records])
 
-        result = get_ctg_data(bpm_df, uterus_df)
+        result = get_ctg_data(bpm_df=bpm_df, uterus_df=uterus_df)
+        print(result)
         # Дальше делать с result что надо (лог, отправка и т.д.)
 
     async def _run_periodic(self) -> None:
@@ -47,7 +48,7 @@ class DataHandler:
                 print(f"Ошибка при отправке данных в ML: {e}")
             await asyncio.sleep(self.interval)
 
-    def start(self) -> None:
+    async def start(self) -> None:
         if self._task is None or self._task.done():
             self.start_time = datetime.utcnow()  # сбрасываем время старта при запуске
             self._task = asyncio.create_task(self._run_periodic())

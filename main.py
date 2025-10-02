@@ -16,6 +16,7 @@ from app.const import (
     CSV_PATH_2,
 )
 from app.emulator.emulator import AsyncFileEmulator
+from app.emulator.datahandler import DataHandler
 from app.config import CommonLogger
 
 from app.emulator.emulator import AsyncFileEmulator  # импортируйте ваш эмулятор здесь
@@ -48,10 +49,9 @@ async def main():
         #     "port": DB_PORT
         # }
     )
+    datahandler = DataHandler(db_master=db_master, bpm_table="bpm", uterus_table="uterus")
 
-    await emulator.stream_data_async()
-
-   
+    await asyncio.gather(emulator.stream_data_async(), datahandler.start())
 
     # uvicorn.run(APP_PATH, host=LOCALHOST_ADDRESS, port=PORT, reload=True)
 

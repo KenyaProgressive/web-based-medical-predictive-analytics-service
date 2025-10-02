@@ -49,10 +49,6 @@ class AsyncFileEmulator:
     async def _insert_rows(self, table_name: str, rows: List[Dict[str, Any]]) -> None:
         if not rows:
             return
-        sql = f"""
-            INSERT INTO {table_name} (time, bpm, uterus)
-            VALUES ($1, $2, $3)
-        """
         for row in rows:
             try:
                 t = float(row.get('time_sec', row.get('time', 0)))  # время в секундах из CSV
@@ -62,9 +58,11 @@ class AsyncFileEmulator:
                 # Для bpm.csv: time = t, bpm = val, uterus = NULL
                 # Для uterus.csv: time = t, bpm = NULL, uterus = val
                 if table_name == 'bpm':
-                    await self.db_master.execute_query(sql, (t, val, None))
-                else:  
-                    await self.db_master.execute_query(sql, (t, None, val))
+                    sql = f"INSERT INTO bpm(time, bpm) VALUES ($1, $2)"
+                    await self.db_master.execute_query(sql, (t, val))
+                else:
+                    sql = f"INSERT INTO uterus(time, uterus) VALUES ($1, $2)"  
+                    await self.db_master.execute_query(sql, (t, val))
             except Exception as e:
                 print(f"Ошибка вставки в {table_name}: {e}")
 

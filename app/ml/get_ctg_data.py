@@ -13,6 +13,7 @@ class CtgData(TypedDict):
     decelerations_per_30_min: List[HeartRateChange]
 
 def get_ctg_data(bpm_df: pd.DataFrame, uterus_df: pd.DataFrame) -> CtgData:
+    print(bpm_df['time'].max())
     time = bpm_df['time'].max() - bpm_df['time'].min()
 
     contractions = find_contractions(uterus_df)[0]

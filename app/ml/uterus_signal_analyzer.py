@@ -52,6 +52,12 @@ def find_contractions(
     uterus: np.ndarray = df["uterus"].values
     time: np.ndarray = df["time"].values
 
+
+    # ОТОШЕЛ ОТ КОМПА !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # ЗВОНИТЕ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
     uterus_med: np.ndarray = medfilt(uterus, kernel_size=5)
     baseline: float = np.percentile(uterus_med, baseline_percentile)
 
@@ -117,26 +123,27 @@ def find_contractions(
 
     contractions_df: pd.DataFrame = pd.DataFrame(contractions)
 
-    freq_results: List[FrequencyWindow] = []
-    window_sec: int = window_minutes * 60
+    # freq_results: List[FrequencyWindow] = []
+    # window_sec: int = window_minutes * 60
 
-    for start in np.arange(0, time[-1], window_sec):
-        end: float = start + window_sec
-        count: int = np.sum(
-            (contractions_df["peak_time"] >= start) &
-            (contractions_df["peak_time"] < end)
-        )
-        freq_results.append(
-            {
-                "window_start": start,
-                "window_end": end,
-                "contractions_count": int(count),
-            }
-        )
+    # for start in np.arange(0, time[-1], window_sec):
+    #     end: float = start + window_sec
+    #     count: int = np.sum(
+    #         (contractions_df["peak_time"] >= start) &
+    #         (contractions_df["peak_time"] < end)
+    #     )
+    #     freq_results.append(
+    #         {
+    #             "window_start": start,
+    #             "window_end": end,
+    #             "contractions_count": int(count),
+    #         }
+    #     )
 
-    freq_df: pd.DataFrame = pd.DataFrame(freq_results)
+    # freq_df: pd.DataFrame = pd.DataFrame(freq_results)
 
-    return contractions_df, freq_df, baseline
+    # return contractions_df, freq_df, baseline
+    return contractions_df, baseline
 
 def calculate_contraction_intensity(contractions: List[Contraction]) -> float:
     """

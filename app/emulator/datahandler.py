@@ -17,18 +17,19 @@ class DataHandler:
         self._task: asyncio.Task = None
 
     async def _fetch_recent_data(self, table_name: str, since_time: datetime) -> List[Record]:
-        query = f"""
-            SELECT * FROM {table_name}
-            WHERE time >= $1
-            ORDER BY time
-        """
-        records = await self.db_master.get_data_from_db(query, False, since_time)
+        query = f"""SELECT * FROM {table_name} WHERE time >= $1 ORDER BY time;"""
+
+        ago_30_minutes = 0
+        if since_time > 1800:
+            ago_30_minutes = since_time - 1800
+
+        records = await self.db_master.get_data_from_db(query, False, (ago_30_minutes))
         return records or []
 
     async def _send_to_ml(self):
         now = datetime.utcnow()
-        time_threshold = max(self.start_time, now - timedelta(minutes=30)) # начало интервала для выборки
-        float_timestamp = time_threshold.timestamp()
+        time_threshold = now - self.start_time
+        float_timestamp = time_threshold.total_seconds()
 
         bpm_records = await self._fetch_recent_data(self.bpm_table, float_timestamp)
         uterus_records = await self._fetch_recent_data(self.uterus_table, float_timestamp)
@@ -42,11 +43,11 @@ class DataHandler:
 
     async def _run_periodic(self) -> None:
         while True:
+            await asyncio.sleep(self.interval)
             try:
                 await self._send_to_ml()
             except Exception as e:
                 print(f"Ошибка при отправке данных в ML: {e}")
-            await asyncio.sleep(self.interval)
 
     async def start(self) -> None:
         if self._task is None or self._task.done():

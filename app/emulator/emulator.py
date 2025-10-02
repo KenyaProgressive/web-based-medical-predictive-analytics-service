@@ -21,7 +21,7 @@ class AsyncFileEmulator:
                  uterus_file: str,
                  db_master: DbMaster,
                  chunk_size: int = 1,
-                 delay: float = 1.0) -> None:
+                 delay: float = 0.25) -> None:
         self.bpm_file = bpm_file
         self.uterus_file = uterus_file
         self.db_master = db_master

@@ -1,5 +1,6 @@
 import asyncio
 import uvicorn
+from glob import glob
 from db.query import CREATE_TABLE_BPM, CREATE_TABLE_UTERUS
 from db.db_config import DbMaster
 from app.const import (
@@ -18,11 +19,21 @@ from app.const import (
 from app.emulator.emulator import AsyncFileEmulator
 from app.emulator.datahandler import DataHandler
 from app.config import CommonLogger
+from app.ml.data_conversion import join_data
 
 from app.emulator.emulator import AsyncFileEmulator  # импортируйте ваш эмулятор здесь
 
 
 async def main():
+
+    bpm_files = glob('db/data/hypoxia/1/bpm/*.csv')
+    uterus_files = glob('db/data/hypoxia/1/uterus/*.csv')
+
+    bpm_df = join_data(bpm_files)
+    uterus_df = join_data(uterus_files)
+
+    bpm_df.to_csv(CSV_PATH_1, index=False)
+    uterus_df.to_csv(CSV_PATH_2, index=False)
 
     db_master: DbMaster = await DbMaster.create_pool(
         dsn=DB_CONNECTION_LINK

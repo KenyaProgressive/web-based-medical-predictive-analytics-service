@@ -13,7 +13,7 @@ class CtgData(TypedDict):
     decelerations_per_30_min: List[HeartRateChange]
 
 def get_ctg_data(bpm_df: pd.DataFrame, uterus_df: pd.DataFrame) -> CtgData:
-    print(bpm_df['time'].max())
+    # print(bpm_df['time'].max())
     time = bpm_df['time'].max() - bpm_df['time'].min()
 
     contractions = find_contractions(uterus_df)[0]
@@ -29,7 +29,7 @@ def get_ctg_data(bpm_df: pd.DataFrame, uterus_df: pd.DataFrame) -> CtgData:
     if MIN_TIME <= time <= MAX_TIME:
         ctg_data['accelerations_per_30_min'] = bpm_anal.get_accelerations(baseline_bpm)
     elif time < MIN_TIME:
-        ctg_data['accelerations_per_30_min'] = ['not enough data to calculate']
+        ctg_data['accelerations_per_30_min'] = []
     elif time > MAX_TIME:
         raise ValueError(
             'The data was transmitted in too long a period of time. Expected 30 minutes'
@@ -39,7 +39,7 @@ def get_ctg_data(bpm_df: pd.DataFrame, uterus_df: pd.DataFrame) -> CtgData:
         decelerations = bpm_anal.get_decelerations(baseline_bpm)
         ctg_data['decelerations_per_30_min'] = bpm_anal.get_decelerations_type(contractions, decelerations)
     elif time < MIN_TIME:
-        ctg_data['decelerations_per_30_min'] = ['not enough data to calculate']
+        ctg_data['decelerations_per_30_min'] = []
     elif time > MAX_TIME:
         raise ValueError(
             'The data was transmitted in too long a period of time. Expected 30 minutes'

@@ -19,7 +19,7 @@ from app.const import (
 from app.emulator.emulator import AsyncFileEmulator
 from app.emulator.datahandler import DataHandler
 from app.config import CommonLogger
-from app.ml.data_conversion import join_data
+
 
 from app.emulator.emulator import AsyncFileEmulator
 
@@ -45,7 +45,13 @@ async def main():
     )
     datahandler = DataHandler(db_master=db_master, bpm_table="bpm", uterus_table="uterus")
 
-    await asyncio.gather(emulator.stream_data_async(), datahandler.start(),  uvicorn.run(APP_PATH, host=LOCALHOST_ADDRESS, port=PORT, reload=True))
+    config = uvicorn.Config(APP_PATH, host=LOCALHOST_ADDRESS, port=PORT, reload=True)
+    server = uvicorn.Server(config)
+
+
+    await asyncio.gather(emulator.stream_data_async(), datahandler.start(), server.serve())
+
+    
 
    
 

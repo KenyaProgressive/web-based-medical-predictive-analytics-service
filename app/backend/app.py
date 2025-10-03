@@ -1,20 +1,30 @@
+
 import random
 from time import sleep
 from fastapi import FastAPI
+from app.config import BackendLogger
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
-from app.const import OUT_PATH
+from app.emulator.datahandler import DataHandler
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from app.ml.get_ctg_data import get_ctg_data
+
+from app.backend import funcs
+from app.backend.funcs import PriorityList
 
 app = FastAPI()
 
 # Монтируем статические файлы (CSS, JS, изображения)
-app.mount("/_next", StaticFiles(directory=os.path.join(OUT_PATH, "_next")), name="_next")
-app.mount("/static", StaticFiles(directory=os.path.join(OUT_PATH, "_next","static")), name="static")
+# app.mount("/_next", StaticFiles(directory=os.path.join(OUT_PATH, "_next")), name="_next")
+# app.mount("/static", StaticFiles(directory=os.path.join(OUT_PATH, "_next","static")), name="static")
+
+out_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/fetal-frontend/out'))
+# Монтируем статические файлы (CSS, JS, изображения)
+app.mount("/_next", StaticFiles(directory=os.path.join(out_path, "_next")), name="_next")
+app.mount("/static", StaticFiles(directory=os.path.join(out_path, "_next","static")), name="static")
+
 
 
 app.add_middleware(
@@ -24,104 +34,67 @@ app.add_middleware(
         # У него порт 3000, поэтому разрешаем подключение с 3000 порта
         "http://localhost:3000",
         "http://localhost:8080",
+        "http://127.0.0.1:8080"
         # Возможно придется делать то же самое для итоговой версии, но по идее нет.
     ],
     allow_credentials=True,
     allow_methods=["GET"],
 )
 
+priority_list = PriorityList()
 
-# Вот тут тебе нужно короче досоставить стейт по образцу и раскидать в него значения из ML-слоя
-# Самое сложное будет следить за полем current_notifications
-
-
-# МАКСИМАЛЬНЫЙ РАЗМЕР СПИСКА УВЕДОМЛЕНИЙ = 8
-
-# if it.priority > priority then delete and push
-# if it.priotiy == priority then if it.time > it.time then delete and push
-
-# запись в файл сразу как получил с ML
 
 @app.get("/getState")
 async def get_state():
-    # sleep(0.5)
 
-    ctg_data = get_ctg_data()
+    global priority_list
+
+    ctg_data = DataHandler.result
+
+    BackendLogger.debug(ctg_data)
+
+    if "decelerations_per_30_min" in list(ctg_data.keys()):
+        BackendLogger.debug(ctg_data["decelerations_per_30_min"])
+        priority_list.add_items(ctg_data["decelerations_per_30_min"])
 
     state = {
         'card_params': [
                 {
-                'title': "ЧСС",
-                'value': random.randint(1,180),
-                'status': rand_status % 3+1,
+                'title': "ЧСС (уд/мин)",
+                'value': int(ctg_data["baseline"]),
+                'status': funcs.status_bpm(int(ctg_data["baseline"])),
                 'rows': 2,
                 'cols': 2,
                 'id': 1
                 },
             {
                 'title': "Сокращения матки",
-                'value': random.randint(1,180),
-                'status': rand_status % 3+2,
+                'value': 1,
+                'status': 0,
                 'rows': 1,
                 'cols': 1,
                 'id': 2
             },
             {
                 'title': "Акцелерации",
-                'value': random.randint(1,180),
-                'status': rand_status % 3-1,
+                'value': len(ctg_data['accelerations_per_30_min']),
+                'status': funcs.status_acceleration(ctg_data['accelerations_per_30_min']),
                 'rows': 1,
                 'cols': 1,
                 'id': 3
             },
             {
-                'title': "Вариабельность (?)",
-                'value': random.randint(1,180),
-                'status': rand_status,
+                'title': "Вариабельность",
+                'value': ctg_data["long_term_variability"],
+                'status': funcs.status_variable(ctg_data),
                 'rows': 1,
                 'cols': 2,
                 'id': 4
             }
 
         ],
-        'notifications' : [
-            {
-                'title': "Фактические уведомления",
-                'values': [
-                    {
-                        'title':"Высокий риск гипоксии",
-                        'description':"Ваще пиздец всему",
-                        'status':2,
-                        'priority':2,
-                        'id' : 88
-                    },
-                    {
-                        'title':"Децелерация",
-                        'description':"Ну такое",
-                        'status':1,
-                        'priority':2,
-                        'id' : 99
-                    }
-                ],
-            },
-            {
-                'title': "Предиктивные уведомления",
-                'values': [
-                    # {
-                    #     'title':"Хуепоксия",
-                    #     'description':"Ваще пиздец всему",
-                    #     'status':2,
-                    #     'id' : 81
-                    # },
-                    # {
-                    #     'title':"Хулелерация",
-                    #     'description':"Ну такое",
-                    #     'status':1,
-                    #     'id' : 91
-                    # }
-                    ],
-            }
-        ]
+
+        'notifications' : priority_list
     }
     
     return {'state': state}

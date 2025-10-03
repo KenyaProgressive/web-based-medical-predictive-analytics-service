@@ -55,4 +55,3 @@ MAX_TIME: int = 60 * 32
 STATUS_OK: int = 0
 STATUS_WARN: int = 1
 STATUS_ALERT: int = 2
-OUT_PATH: str = os.path.join(os.path.dirname( __file__ ), '../frontend/fetal-frontend/out')

@@ -17,8 +17,8 @@ export default function AlertHistory() {
 
     return (
         <div className="grid grid-cols-2 bg-slate-400 w-full min-h-[300px] h-full p-0 gap-2">
-            <AlertList notifications={state[0].values} title={"Фактические уведомления"} />
-            <AlertList notifications={state[1].values} title={"Предиктивные уведомления"} />
+            {state[0]&&<AlertList notifications={state[0].values} title={"Фактические уведомления"} />}
+            {state[1]&&<AlertList notifications={state[1].values} title={"Предиктивные уведомления"} />}
         </div>
     )
 }

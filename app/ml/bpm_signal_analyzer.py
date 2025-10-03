@@ -11,6 +11,7 @@ class HeartRateChange(TypedDict):
     peak_idx: int
     end_idx: int
     type: Optional[List[str]]
+    priority: Optional[int]
 
 class BpmSignalAnalyzer:
     """
@@ -208,6 +209,7 @@ class BpmSignalAnalyzer:
                         "start_idx": start_idx,
                         "end_idx": end_idx,
                         "type": [],
+                        "priority": -1,
                     })
 
                 start_time = end_time = 0
@@ -221,16 +223,26 @@ class BpmSignalAnalyzer:
         contractions: pd.DataFrame,
         decelerations: List[HeartRateChange]
     ) -> List[HeartRateChange]:
+        
         for curr_decel in decelerations:
             if 180 <= curr_decel['duration_sec'] <= 600:
                 curr_decel['type'].append('prolongued')
+                curr_decel['priority'] = 2
 
             if 15 <= curr_decel['amplitude'] <= 30:
                 curr_decel['type'].append('light')
+                if curr_decel['priority'] == -1:
+                    curr_decel['priority'] = 0
+
             elif 16 <= curr_decel['amplitude'] <= 45:
                 curr_decel['type'].append('moderate')
+                if curr_decel['priority'] <= 0:
+                    curr_decel['priority'] = 1
+
             elif curr_decel['amplitude'] >= 45:
                 curr_decel['type'].append('severe')
+                if curr_decel['priority'] <= 1:
+                    curr_decel['priority'] = 2
 
             overlap = contractions[
                 (contractions['end_time'] >= curr_decel['start_time'])
@@ -243,17 +255,25 @@ class BpmSignalAnalyzer:
                         and curr_decel['peak_time'] > contraction['peak_time']
                     ):
                         curr_decel['type'].append('late')
+                        if curr_decel['priority'] <= 0:
+                            curr_decel['priority'] = 1
                     elif (
                         abs(curr_decel['start_time'] - contraction['start_time']) <= 3
                         and abs(curr_decel['peak_time'] - contraction['peak_time']) <= 3
                         and abs(curr_decel['end_time'] - contraction['end_time']) <= 3
                     ):
                         curr_decel['type'].append('early')
+                        if curr_decel['priority'] == -1:
+                            curr_decel['priority'] = 0
                     else:
                         curr_decel['type'].append('variable')
+                        if curr_decel['priority'] <= 1:
+                            curr_decel['priority'] = 2
             else:
                 curr_decel['type'].append('variable')
-
+                if curr_decel['priority'] <= 1:
+                    curr_decel['priority'] = 2
+                    
         return decelerations
 
     def get_short_term_variability(self, bpm: pd.DataFrame = None) -> float:

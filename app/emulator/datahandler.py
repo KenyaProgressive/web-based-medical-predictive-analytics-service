@@ -8,6 +8,15 @@ from db.db_config import DbMaster
 from app.ml.get_ctg_data import get_ctg_data
 
 class DataHandler:
+    
+    result = {
+        "bpm": 0,
+        "short_term_variability": 0,
+        "long_term_variability": 0,
+        "accelerations_per_30_min": [],
+        "decelerations_per_30_min": [],
+    }
+
     def __init__(self, db_master: DbMaster, bpm_table: str, uterus_table: str, interval: float = 4.0) -> None:
         self.db_master = db_master
         self.bpm_table = bpm_table
@@ -15,11 +24,15 @@ class DataHandler:
         self.interval = interval
         self.start_time = datetime.utcnow()  # запоминает время старта
         self._task: asyncio.Task = None
-        self.__result = {}
+        # self.__result = {}
 
-    @property
-    def result(self):
-        return self.__result
+    # @property
+    # def result(self):
+    #     return self.__result
+
+    @classmethod
+    def change_result(cls, value):
+        cls.result = value
 
     async def _fetch_recent_data(self, table_name: str, since_time: datetime) -> List[Record]:
         query = f"""SELECT * FROM {table_name} WHERE time >= $1 ORDER BY time;"""
@@ -43,8 +56,10 @@ class DataHandler:
         uterus_df = pd.DataFrame([{ 'time': r['time'], 'uterus': r['uterus']} for r in uterus_records])
 
         result = get_ctg_data(bpm_df=bpm_df, uterus_df=uterus_df)
-        self.__result = result
-        print(result)
+
+        self.change_result(result)
+
+        # print(result)
         # Дальше делать с result что надо (лог, отправка и т.д.)
 
     async def _run_periodic(self) -> None:

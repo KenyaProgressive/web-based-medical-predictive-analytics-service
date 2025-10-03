@@ -99,7 +99,7 @@
         "transform": "lodash/{{member}}"
       }
     },
-    "outputFileTracingRoot": "/home/dolgovv/Documents/WORK/web-based-medical-predictive-analytics-service/app/frontend/fetal-frontend",
+    "outputFileTracingRoot": "/home/mr_kenya/Desktop/projects/web-based-medical-predictive-analytics-service/app/frontend/fetal-frontend",
     "experimental": {
       "useSkewCookie": false,
       "cacheLife": {
@@ -158,7 +158,7 @@
       "middlewarePrefetch": "flexible",
       "optimisticClientCache": true,
       "manualClientBasePath": false,
-      "cpus": 15,
+      "cpus": 11,
       "memoryBasedWorkersCount": false,
       "imgOptConcurrency": null,
       "imgOptTimeoutInSeconds": 7,
@@ -288,10 +288,10 @@
     "bundlePagesRouterDependencies": false,
     "configFileName": "next.config.mjs",
     "turbopack": {
-      "root": "/home/dolgovv/Documents/WORK/web-based-medical-predictive-analytics-service/app/frontend/fetal-frontend"
+      "root": "/home/mr_kenya/Desktop/projects/web-based-medical-predictive-analytics-service/app/frontend/fetal-frontend"
     }
   },
-  "appDir": "/home/dolgovv/Documents/WORK/web-based-medical-predictive-analytics-service/app/frontend/fetal-frontend",
+  "appDir": "/home/mr_kenya/Desktop/projects/web-based-medical-predictive-analytics-service/app/frontend/fetal-frontend",
   "relativeAppDir": "",
   "files": [
     ".next/routes-manifest.json",

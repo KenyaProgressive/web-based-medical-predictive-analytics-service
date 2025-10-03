@@ -88,6 +88,5 @@ class AsyncFileEmulator:
 
             # print(f"Отправлено в hypoxia_table: {len(rows1)} строк")
             # print(f"Отправлено в regular_table: {len(rows2)} строк")
-            print('---')
-
+            
             await asyncio.sleep(self.delay)

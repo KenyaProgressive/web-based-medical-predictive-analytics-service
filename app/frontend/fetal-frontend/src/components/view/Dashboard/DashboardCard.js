@@ -12,7 +12,7 @@ import {
 
 export default function DashboardCard({ param }) {
     const statusMask = STATUS_STYLES[param.status] || STATUS_STYLES[0];
-    const size = param.id === 1 ? "text-[12vw]" : "text-[4vw]";
+    const size = param.id === 1 ? "text-[12vw]" : "text-[3vw]";
     // console.log(param.rows, param.title);
     return (
         <Card className={`min-h-[100px] h-full ${statusMask} ${DASHBOARD_ANIMATION} col-span-` + param.cols + ` row-span-` + param.rows}>

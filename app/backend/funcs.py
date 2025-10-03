@@ -1,5 +1,6 @@
 from app.const import STATUS_OK, STATUS_WARN, STATUS_ALERT
 from app.ml.bpm_signal_analyzer import HeartRateChange
+import random
 
 def status_bpm(bpm: float) -> int:
     if bpm >= 120.0 and bpm <= 160.0:
@@ -21,8 +22,12 @@ def status_variable(variables: dict) -> int:
     elif (short_variable < 3.0) or (long_variable < 10.0):
         return STATUS_ALERT
 
-def status_acceleration(accelerations: list) -> int:
+def status_acceleration(accelerations: list | str) -> int:
+    if accelerations == "Нет данных":
+        return STATUS_OK
+    
     value = len(accelerations)
+
     if value > 5:
         return STATUS_OK
     elif value >= 1 and value <= 4:
@@ -59,7 +64,7 @@ class PriorityList:
     MAX_SIZE = 8
 
     def __init__(self):
-        self.items = []
+        self.items = [{'title': '', 'description': '', 'id': 1, 'status': 1}, {'title': '', 'description': '', 'id': 2, 'status': 1}]
 
     def __add_item(self, new_item):
         # Если список не заполнен, просто добавить новый элемент

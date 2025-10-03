@@ -6,6 +6,7 @@ from app.config import BackendLogger
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
+
 from app.emulator.datahandler import DataHandler
 
 from fastapi.staticfiles import StaticFiles
@@ -41,7 +42,8 @@ app.add_middleware(
     allow_methods=["GET"],
 )
 
-priority_list = PriorityList()
+predict_notifications = PriorityList()
+fact_notifications = PriorityList()
 
 
 @app.get("/getState")
@@ -55,46 +57,52 @@ async def get_state():
 
     if "decelerations_per_30_min" in list(ctg_data.keys()):
         BackendLogger.debug(ctg_data["decelerations_per_30_min"])
-        priority_list.add_items(ctg_data["decelerations_per_30_min"])
+        fact_notifications.add_items(ctg_data["decelerations_per_30_min"])
 
     state = {
         'card_params': [
                 {
                 'title': "ЧСС (уд/мин)",
                 'value': int(ctg_data["baseline"]),
-                'status': funcs.status_bpm(int(ctg_data["baseline"])),
+                'status': funcs.status_bpm(ctg_data["baseline"]),
                 'rows': 2,
                 'cols': 2,
                 'id': 1
                 },
             {
-                'title': "Сокращения матки",
-                'value': 1,
-                'status': 0,
+                'title': "Кратковременная вариабельность",
+                'value': round(ctg_data["short_term_variability"], 2),
+                'status': funcs.status_variable(ctg_data),
                 'rows': 1,
                 'cols': 1,
                 'id': 2
             },
             {
-                'title': "Акцелерации",
-                'value': len(ctg_data['accelerations_per_30_min']),
-                'status': funcs.status_acceleration(ctg_data['accelerations_per_30_min']),
+                'title': "Долговременная вариабельность",
+                'value': round(ctg_data["long_term_variability"], 2),
+                'status': funcs.status_variable(ctg_data),
                 'rows': 1,
                 'cols': 1,
                 'id': 3
             },
             {
-                'title': "Вариабельность",
-                'value': ctg_data["long_term_variability"],
-                'status': funcs.status_variable(ctg_data),
+                'title': "Акцелерации",
+                'value': len(ctg_data['accelerations_per_30_min']) or "Нет данных",
+                'status': funcs.status_acceleration(ctg_data['accelerations_per_30_min'] or "Нет данных"),
                 'rows': 1,
                 'cols': 2,
                 'id': 4
             }
-
         ],
 
-        'notifications' : priority_list
+        'notifications' : [
+            {
+                'values': []
+            },
+            {
+                'values': []
+            }
+        ]
     }
     
     return {'state': state}

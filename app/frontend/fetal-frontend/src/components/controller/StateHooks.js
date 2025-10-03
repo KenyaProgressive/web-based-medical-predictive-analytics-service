@@ -15,7 +15,7 @@ export const useAppState = (isEnabled = false) => {
     return useQuery({
         queryKey: ['allState'],
         queryFn: fetchAllData,
-        refetchInterval: 500,
+        refetchInterval: 4000,
         enabled: isEnabled,
     });
 };

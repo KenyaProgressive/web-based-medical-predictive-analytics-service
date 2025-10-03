@@ -10,7 +10,7 @@ export default function Home() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="bg-slate-400 grid xl:grid-cols-6 md:grid-cols-5 md:grid-rows-auto h-screen p-4 gap-6">
+      <div className="bg-slate-400 grid xl:grid-cols-6 md:grid-cols-5 md:grid-rows-auto p-4 gap-6">
 
         <div className="col-span-2">
           <Dashboard />

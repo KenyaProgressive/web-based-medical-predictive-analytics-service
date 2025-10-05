@@ -12,8 +12,8 @@ POSTGRES_DB = os.getenv("POSTGRES_DB")
 ## COMMON
 
 LOCALHOST_ADDRESS: str = "127.0.0.1"
-CSV_PATH_1: str = "app/emulator/20250908-07500001_1.csv"
-CSV_PATH_2: str = "app/emulator/20250908-07500001_2.csv"
+CSV_PATH_1: str = "app/emulator/bpm.csv"
+CSV_PATH_2: str = "app/emulator/uterus.csv"
 
 
 ## UVICORN

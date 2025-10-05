@@ -52,12 +52,6 @@ def find_contractions(
     uterus: np.ndarray = df["uterus"].values
     time: np.ndarray = df["time"].values
 
-
-    # ОТОШЕЛ ОТ КОМПА !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # ЗВОНИТЕ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
     uterus_med: np.ndarray = medfilt(uterus, kernel_size=5)
     baseline: float = np.percentile(uterus_med, baseline_percentile)
 

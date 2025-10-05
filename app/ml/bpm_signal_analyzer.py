@@ -1,5 +1,7 @@
 from typing import List, TypedDict, Optional
 import pandas as pd
+import numpy as np
+from scipy.signal import medfilt
 
 class HeartRateChange(TypedDict):
     start_time: float
@@ -19,6 +21,16 @@ class BpmSignalAnalyzer:
     """
     def __init__(self, df: pd.DataFrame):
         self.__df: pd.DataFrame = df.copy()
+
+    def __get_med_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        index: pd.Index = df.index
+        time: np.ndarray = df['time'].values
+        bpm: np.ndarray = df['bpm'].values
+
+        med_bpm: np.ndarray = medfilt(bpm, kernel_size=5)
+        med_df: pd.DataFrame = pd.DataFrame({'time': time, 'bpm': med_bpm}, index=index)
+        # med_df.to_csv('app/emulator/med_bpm.csv', index=False)
+        return med_df
 
     def get_baseline(self, baseline_df: pd.DataFrame = None) -> float:
         """
@@ -83,53 +95,69 @@ class BpmSignalAnalyzer:
 
         if df is None:
             df = self.__df
+        df = self.__get_med_df(df)
 
-        start_time = end_time = 0
+        size = len(df)
+        index: pd.Index = df.index
+        time: np.ndarray = df['time'].values
+        bpm: np.ndarray = df['bpm'].values
+
         start_idx = end_idx = 0
-        is_increase_start = is_increase_finish = False
+        start_time = end_time = 0
+        is_start = is_finish = False
 
         accelerations: List[HeartRateChange] = []
 
-        prev_time = 0
-        for row in df.itertuples():
-            current_time = row.time
+        prev_time: float = time[0]
+        prev_bpm: float = bpm[0]
+        for i in range(1, size):
+            curr_idx: int = index[i]
+            curr_time: float = time[i]
+            curr_bpm: float = bpm[i]
 
-            if row.bpm - baseline >= 15:
-                if not is_increase_start:
-                    start_time = row.time
-                    start_idx = row.Index
-                    is_increase_start = True
-                elif current_time - prev_time > 5:
-                    start_time = end_time = 0
-                    is_increase_start = is_increase_finish = False
+            data_gap: bool = curr_time - prev_time > 5
+            if data_gap:
+                start_idx = end_idx = 0
+                start_time = end_time = 0
+                is_start = is_finish = False
+            else:
+                diff: float = curr_bpm - prev_bpm
+                if not is_start:
+                    if diff > 0 and curr_bpm >= baseline:
+                        start_idx = curr_idx
+                        start_time = curr_time
+                        is_start = True
                 else:
-                    end_time = row.time
-                    end_idx = row.Index
-            elif is_increase_start:
-                is_increase_finish = True
+                    if diff <= 0 and curr_bpm <= baseline + 6:
+                        end_time = curr_time
+                        end_idx = curr_idx
+                        is_finish = True
 
-            if is_increase_start and is_increase_finish:
+            if is_start and is_finish:
                 if end_time - start_time >= 15:
                     curr_act_df: pd.DataFrame = df.loc[start_idx:end_idx + 1]
 
                     peak_idx = curr_act_df['bpm'].idxmax()
                     peak_time, peak_value = df.loc[peak_idx]['time'], df.loc[peak_idx]['bpm']
 
-                    accelerations.append({
-                        "peak_time": float(peak_time),
-                        "start_time": start_time,
-                        "end_time": end_time,
-                        "duration_sec": end_time - start_time,
-                        "amplitude": float(peak_value - baseline),
-                        "peak_idx": peak_idx,
-                        "start_idx": start_idx,
-                        "end_idx": end_idx,
-                    })
+                    amplitude = peak_value - baseline
+                    if amplitude >= 15:
+                        accelerations.append({
+                            "peak_time": float(peak_time),
+                            "start_time": start_time,
+                            "end_time": end_time,
+                            "duration_sec": end_time - start_time,
+                            "amplitude": amplitude,
+                            "peak_idx": peak_idx,
+                            "start_idx": start_idx,
+                            "end_idx": end_idx,
+                        })
 
                 start_time = end_time = 0
-                is_increase_start = is_increase_finish = False
+                is_start = is_finish = False
 
-            prev_time = current_time
+            prev_time = curr_time
+            prev_bpm = curr_bpm
 
         return accelerations
 
